@@ -1,89 +1,81 @@
 import { View, TouchableOpacity, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
-// import * as firebase from "firebase/app";
-// import { fireApp } from "../utils/firebase/config";
+import SignUp from "./SignupComponent/SignupComponent";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer } from "@react-navigation/native";
+import { fetchUser } from "./redux/ActionCreators";
+import { connect } from "react-redux";
+import Home from "./HomeComponent/HomeComponent";
 
-import * as GoogleAuthentication from "expo-google-app-auth";
+const mapStateToProps = (state) => {
+  return {
+    user: state.user,
+  };
+};
 
-export default class Navigator extends React.Component {
-  storeData = async (value) => {
-    try {
-      const jsonValue = JSON.stringify(value);
-      await AsyncStorage.setItem("@user_data", jsonValue);
-    } catch (e) {
-      console.log(e);
-    }
-  };
+const mapDispatchToProps = (dispatch) => ({
+  fetchUser: ({ email }) => dispatch(fetchUser({ email: email })),
+});
 
-  getData = async () => {
-    try {
-      const value = await AsyncStorage.getItem("@user_data");
-      if (value !== null) {
-        console.log(value);
-      } else {
-        console.log("null");
-      }
-    } catch (e) {
-      console.log(e);
+class Navigator extends React.Component {
+  componentDidMount() {
+    // this.props.fetchUser({ email: "kpaul@flowmed.ca" });
+    if (this.props.user.data.length == 0) {
+      // this.props.fetchUser({ email: "kpaul@flowmed.ca" });
     }
-  };
-  deleteData = async () => {
-    try {
-      await AsyncStorage.removeItem("@user_data");
-    } catch (e) {
-      console.log(e);
-    }
-  };
+    console.log(this.props.user);
+  }
 
   render() {
-    const signInWithGoogle = () =>
-      GoogleAuthentication.logInAsync({
-        androidClientId:
-          "346457672075-bhfqiseq566tt03shnnehcvbrdamdkh7.apps.googleusercontent.com",
-        // androidStandaloneAppClientId: 'ANDROID_STANDALONE_APP_CLIENT_ID',
-        // iosStandaloneAppClientId: 'IOS_STANDALONE_APP_CLIENT_ID',
-        scopes: ["profile", "email"],
-      })
-        .then((logInResult) => {
-          if (logInResult.type === "success") {
-            const { idToken, accessToken } = logInResult;
-            const credential = firebase.auth.GoogleAuthProvider.credential(
-              idToken,
-              accessToken
-            );
-
-            return firebase.auth().signInWithCredential(credential);
-            // Successful sign in is handled by firebase.auth().onAuthStateChanged
-          }
-          return Promise.reject(); // Or handle user cancelation separatedly
-        })
-        .catch((error) => {
-          // ...
-        });
-    return (
-      <View style={{ marginTop: 20 }}>
-        <TouchableOpacity
-          onPress={() =>
-            this.storeData({
-              email: "bkevin1999@gmail.com",
-              name: "kevin",
-              token: "123",
-            })
-          }
-        >
-          <Text>Add Data</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={this.getData}>
-          <Text>get Data</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={this.deleteData}>
-          <Text>delete Data</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => signInWithGoogle()}>
-          <Text>Login</Text>
-        </TouchableOpacity>
-      </View>
-    );
+    const Stack = createNativeStackNavigator();
+    if (this.props.user.isLoading) {
+      return (
+        <View style={{ marginTop: 100 }}>
+          <Text>Loading</Text>
+        </View>
+      );
+    }
+    if (!this.props.user.isLoading && this.props.user.errMess != null) {
+      console.log(this.props.user);
+      return (
+        <View style={{ marginTop: 100 }}>
+          <Text>Nothing</Text>
+        </View>
+      );
+    } else if (this.props.user.data.length == 0) {
+      return (
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="signup"
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="signup" component={SignUp} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      );
+    } else if (this.props.user.data.length > 0) {
+      return (
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="home"
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="home" component={Home} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      );
+    } else {
+      return (
+        <View>
+          <Text>Nothingr</Text>
+        </View>
+      );
+    }
   }
 }
+export default connect(mapStateToProps, mapDispatchToProps)(Navigator);

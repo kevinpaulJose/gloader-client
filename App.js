@@ -1,17 +1,20 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import React from "react";
 import Navigator from "./components/NavigationComponent";
-import SignUp from "./components/SignupComponent/SignupComponent";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { ConfigureStore } from "./components/redux/configureStore";
 
-export default function App() {
-  return <SignUp />;
+const { persistor, store } = ConfigureStore();
+
+export default class App extends React.Component {
+  render() {
+    return (
+      <Provider store={store}>
+        <PersistGate persistor={persistor}>
+          <Navigator />
+        </PersistGate>
+      </Provider>
+    );
+  }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

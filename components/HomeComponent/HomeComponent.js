@@ -16,7 +16,7 @@ const mapDispatchToProps = (dispatch) => ({
   fetchUser: ({ email }) => dispatch(fetchUser({ email: email })),
 });
 
-class SignUp extends React.Component {
+class Home extends React.Component {
   componentDidMount() {
     // console.log("From signup");
     // console.log(this.props.user);
@@ -34,10 +34,10 @@ class SignUp extends React.Component {
             _handlePressButtonAsync();
           }}
         >
-          <Text>Signup</Text>
+          <Text>Homes</Text>
         </TouchableOpacity>
       </View>
     );
   }
 }
-export default connect(mapStateToProps, mapDispatchToProps)(SignUp);
+export default connect(mapStateToProps, mapDispatchToProps)(Home);
