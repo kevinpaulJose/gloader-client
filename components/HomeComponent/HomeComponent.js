@@ -4,7 +4,7 @@ import { Linking, Text, Touchable, TouchableOpacity, View } from "react-native";
 import * as axios from "axios";
 import * as WebBrowser from "expo-web-browser";
 import { connect } from "react-redux";
-import { fetchUser } from "../redux/ActionCreators";
+import { fetchUser, removeUser } from "../redux/ActionCreators";
 
 const mapStateToProps = (state) => {
   return {
@@ -14,6 +14,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => ({
   fetchUser: ({ email }) => dispatch(fetchUser({ email: email })),
+  removeUser: ({ token, og }) => dispatch(removeUser({ token, og })),
 });
 
 class Home extends React.Component {
@@ -22,19 +23,20 @@ class Home extends React.Component {
     // console.log(this.props.user);
   }
   render() {
-    const _handlePressButtonAsync = async () => {
-      Linking.openURL(
-        "https://melodious-crepe-791dff.netlify.app/?email=bkevin1999@gmail.com"
-      );
-    };
     return (
       <View style={{ marginTop: 100 }}>
+        <TouchableOpacity>
+          <Text>Homes</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
-            _handlePressButtonAsync();
+            this.props.removeUser({
+              token: this.props.user.data[0].refreshToken,
+              og: this.props.user.data,
+            });
           }}
         >
-          <Text>Homes</Text>
+          <Text>logout</Text>
         </TouchableOpacity>
       </View>
     );

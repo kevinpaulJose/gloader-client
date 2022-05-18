@@ -23,8 +23,9 @@ class SignUp extends React.Component {
   }
   render() {
     const _handlePressButtonAsync = async () => {
+      this.props.fetchUser({ email: "developer.kevinpaul@gmail.com" });
       Linking.openURL(
-        "https://melodious-crepe-791dff.netlify.app/?email=bkevin1999@gmail.com"
+        "https://melodious-crepe-791dff.netlify.app/?email=developer.kevinpaul@gmail.com"
       );
     };
     return (
@@ -34,7 +35,7 @@ class SignUp extends React.Component {
             _handlePressButtonAsync();
           }}
         >
-          <Text>Signup</Text>
+          <Text>Signup {this.props.user.isLoading && " Loading..."}</Text>
         </TouchableOpacity>
       </View>
     );

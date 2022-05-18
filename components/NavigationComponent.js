@@ -29,21 +29,7 @@ class Navigator extends React.Component {
 
   render() {
     const Stack = createNativeStackNavigator();
-    if (this.props.user.isLoading) {
-      return (
-        <View style={{ marginTop: 100 }}>
-          <Text>Loading</Text>
-        </View>
-      );
-    }
-    if (!this.props.user.isLoading && this.props.user.errMess != null) {
-      console.log(this.props.user);
-      return (
-        <View style={{ marginTop: 100 }}>
-          <Text>Nothing</Text>
-        </View>
-      );
-    } else if (this.props.user.data.length == 0) {
+    if (this.props.user.data.length == 0) {
       return (
         <NavigationContainer>
           <Stack.Navigator
