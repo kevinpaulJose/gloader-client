@@ -91,15 +91,6 @@ class SignUp extends React.Component {
                   resizeMode={"contain"}
                 />
               </View>
-              {/* <View
-                style={{
-                  width: 100,
-                  height: 100,
-                  // backgroundColor: "red",
-                  marginTop: -40,
-                  alignSelf: "center",
-                }}
-              > */}
               <LottieView
                 style={{
                   width: 120,
@@ -186,6 +177,48 @@ class SignUp extends React.Component {
                   keyboardType="email-address"
                 />
               </View>
+              {!this.props.user.isLoading && (
+                <View
+                  activeOpacity={0.8}
+                  style={{
+                    alignSelf: "center",
+                    marginTop: 15,
+                    // display: "none",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: theme.mainDark,
+                      fontSize: 14,
+                      // fontWeight: "bold",
+                    }}
+                  ></Text>
+                </View>
+              )}
+              {this.props.user.isLoading && (
+                <TouchableOpacity
+                  onPress={() => {
+                    this.setState({ email: "" });
+                    this.props.stopFetching();
+                  }}
+                  activeOpacity={0.8}
+                  style={{
+                    alignSelf: "center",
+                    marginTop: 15,
+                    // display: "none",a
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: theme.mainDark,
+                      fontSize: 14,
+                      // fontWeight: "bold",
+                    }}
+                  >
+                    Change Gmail ID?
+                  </Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 disabled={this.props.user.isLoading}
                 onPress={() => this._handlePressButtonAsync()}
@@ -193,11 +226,9 @@ class SignUp extends React.Component {
                 style={{
                   width: 70,
                   height: 70,
-                  backgroundColor: this.props.user.isLoading
-                    ? theme.mainLight
-                    : theme.mainDark,
+                  backgroundColor: theme.mainDark,
                   alignSelf: "center",
-                  marginTop: 50,
+                  marginTop: 40,
                   borderRadius: 20,
 
                   shadowColor: theme.mainDark,
@@ -225,29 +256,6 @@ class SignUp extends React.Component {
                   />
                 )}
               </TouchableOpacity>
-              {this.props.user.isLoading && (
-                <TouchableOpacity
-                  onPress={() => {
-                    this.setState({ email: "" });
-                    this.props.stopFetching();
-                  }}
-                  activeOpacity={0.8}
-                  style={{
-                    alignSelf: "center",
-                    marginTop: 15,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: theme.mainDark,
-                      fontSize: 14,
-                      // fontWeight: "bold",
-                    }}
-                  >
-                    Change Gmail ID?
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         </KeyboardAwareScrollView>
