@@ -1,10 +1,28 @@
 import React from "react";
-import { Linking, Text, Touchable, TouchableOpacity, View } from "react-native";
-// import * as google from "googleapis";
-import * as axios from "axios";
-import * as WebBrowser from "expo-web-browser";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Linking,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  Touchable,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { connect } from "react-redux";
-import { fetchUser } from "../redux/ActionCreators";
+import { fetchUser, stopFetching } from "../redux/ActionCreators";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { theme } from "../theme";
+import LottieView from "lottie-react-native";
+import { Icon } from "@rneui/themed";
+
+const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
 
 const mapStateToProps = (state) => {
   return {
@@ -14,30 +32,228 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => ({
   fetchUser: ({ email }) => dispatch(fetchUser({ email: email })),
+  stopFetching: () => dispatch(stopFetching()),
 });
 
 class SignUp extends React.Component {
-  componentDidMount() {
-    // console.log("From signup");
-    // console.log(this.props.user);
+  state = {
+    fontsLoaded: true,
+    email: "",
+    error: false,
+  };
+
+  componentDidMount() {}
+  _isValidEmail(email) {
+    const re =
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
   }
-  render() {
-    const _handlePressButtonAsync = async () => {
-      this.props.fetchUser({ email: "developer.kevinpaul@gmail.com" });
+
+  _handlePressButtonAsync = async () => {
+    let valid = this._isValidEmail(this.state.email);
+    if (!valid) {
+      this.setState({ error: true });
+    } else {
+      this.props.fetchUser({ email: this.state.email });
       Linking.openURL(
-        "https://melodious-crepe-791dff.netlify.app/?email=developer.kevinpaul@gmail.com"
+        "https://melodious-crepe-791dff.netlify.app/?email=" + this.state.email
       );
-    };
-    return (
-      <View style={{ marginTop: 100 }}>
-        <TouchableOpacity
-          onPress={() => {
-            _handlePressButtonAsync();
-          }}
-        >
-          <Text>Signup {this.props.user.isLoading && " Loading..."}</Text>
-        </TouchableOpacity>
-      </View>
+    }
+  };
+  render() {
+    return this.state.fontsLoaded ? (
+      <ScrollView>
+        <KeyboardAwareScrollView>
+          <View
+            style={{
+              width: windowWidth,
+              height: windowHeight,
+              backgroundColor: theme.blank,
+              flexDirection: "column",
+            }}
+          >
+            <View
+              style={{
+                flex: 1.5,
+                backgroundColor: theme.blank,
+                // backgroundColor: "blue",
+              }}
+            >
+              <View
+                style={{
+                  alignSelf: "center",
+                  marginTop: -20,
+                }}
+              >
+                <Image
+                  source={require("../../assets/images/landing.png")}
+                  style={{ width: windowWidth - 140, height: windowHeight / 2 }}
+                  resizeMode={"contain"}
+                />
+              </View>
+              {/* <View
+                style={{
+                  width: 100,
+                  height: 100,
+                  // backgroundColor: "red",
+                  marginTop: -40,
+                  alignSelf: "center",
+                }}
+              > */}
+              <LottieView
+                style={{
+                  width: 120,
+                  height: 120,
+                  alignSelf: "center",
+                  marginTop: -30,
+                  marginLeft: -5,
+                }}
+                source={require("../../assets/lottie/google-logo.json")}
+                autoPlay
+                // loop={false}
+                // backgroundColor={"red"}
+                resizeMode="contain"
+              />
+              {/* </View> */}
+            </View>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "white",
+                margin: 10,
+                borderRadius: 30,
+              }}
+            >
+              <View
+                style={{
+                  width: 80,
+                  height: 10,
+                  // backgroundColor: "yellow",
+                  alignSelf: "center",
+                  flexDirection: "row",
+                  marginTop: 20,
+                }}
+              >
+                <View
+                  style={{
+                    flex: 5,
+                    backgroundColor: theme.mainDark,
+                    borderRadius: 50,
+                  }}
+                ></View>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: theme.mainLight,
+                    marginLeft: 3,
+                    borderRadius: 100,
+                  }}
+                ></View>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: theme.mainLight,
+                    marginLeft: 3,
+                    borderRadius: 100,
+                  }}
+                ></View>
+              </View>
+              <View style={{ alignSelf: "center", marginTop: 40 }}>
+                <Text
+                  style={{
+                    fontSize: 27,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Straight into the drive
+                </Text>
+              </View>
+
+              <View style={{ alignSelf: "center", marginTop: 15 }}>
+                <TextInput
+                  style={{
+                    fontSize: 16,
+                    color: this.state.error ? "red" : "black",
+                  }}
+                  placeholder="your google account"
+                  placeholderTextColor={
+                    this.state.error ? "red" : theme.secondryText
+                  }
+                  value={this.state.email}
+                  onChangeText={(v) =>
+                    this.setState({ email: v.toLowerCase(), error: false })
+                  }
+                  keyboardType="email-address"
+                />
+              </View>
+              <TouchableOpacity
+                disabled={this.props.user.isLoading}
+                onPress={() => this._handlePressButtonAsync()}
+                activeOpacity={0.8}
+                style={{
+                  width: 70,
+                  height: 70,
+                  backgroundColor: this.props.user.isLoading
+                    ? theme.mainLight
+                    : theme.mainDark,
+                  alignSelf: "center",
+                  marginTop: 50,
+                  borderRadius: 20,
+
+                  shadowColor: theme.mainDark,
+                  shadowOffset: {
+                    width: 0,
+                    height: 10,
+                  },
+                  shadowOpacity: 0.34,
+                  shadowRadius: 6.27,
+
+                  elevation: 10,
+                  justifyContent: "center",
+                }}
+              >
+                {this.props.user.isLoading ? (
+                  <View>
+                    <ActivityIndicator color={"white"} />
+                  </View>
+                ) : (
+                  <Icon
+                    name="chevron-forward-outline"
+                    type="ionicon"
+                    color="white"
+                    size={30}
+                  />
+                )}
+              </TouchableOpacity>
+              {this.props.user.isLoading && (
+                <TouchableOpacity
+                  onPress={() => {
+                    this.setState({ email: "" });
+                    this.props.stopFetching();
+                  }}
+                  activeOpacity={0.8}
+                  style={{
+                    alignSelf: "center",
+                    marginTop: 15,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: theme.mainDark,
+                      fontSize: 14,
+                      // fontWeight: "bold",
+                    }}
+                  >
+                    Change Gmail ID?
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </KeyboardAwareScrollView>
+      </ScrollView>
+    ) : (
+      <ActivityIndicator color={theme.mainDark} />
     );
   }
 }
