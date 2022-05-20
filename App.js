@@ -8,6 +8,7 @@ import { LogBox } from "react-native";
 
 const { persistor, store } = ConfigureStore();
 LogBox.ignoreLogs([/ViewPropTypes/]);
+LogBox.ignoreLogs([/useNativeDriver/]);
 
 export default class App extends React.Component {
   render() {

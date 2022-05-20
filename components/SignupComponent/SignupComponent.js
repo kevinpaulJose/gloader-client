@@ -22,7 +22,7 @@ import LottieView from "lottie-react-native";
 import { Icon } from "@rneui/themed";
 
 const windowWidth = Dimensions.get("window").width;
-const windowHeight = Dimensions.get("window").height;
+const windowHeight = Dimensions.get("window").height + StatusBar.currentHeight;
 
 const mapStateToProps = (state) => {
   return {
@@ -228,7 +228,7 @@ class SignUp extends React.Component {
                   height: 70,
                   backgroundColor: theme.mainDark,
                   alignSelf: "center",
-                  marginTop: 40,
+                  marginTop: 20,
                   borderRadius: 20,
 
                   shadowColor: theme.mainDark,
