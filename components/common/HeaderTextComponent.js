@@ -45,6 +45,10 @@ const HeaderTextComponent = (props) => {
     }
   }, [props.shown]);
 
+  const _checkRefreshToken = () => {
+    this.setState({ googleConnectionIsChecking: true });
+  };
+
   return (
     <View style={{ marginTop: StatusBar.currentHeight + 30 }}>
       {Platform.OS == "ios" ? (
@@ -125,7 +129,7 @@ const HeaderTextComponent = (props) => {
                   opacity: 0.5,
                 }}
               >
-                google: {props.conStatus ? "connected" : "not connected"}
+                google: {props.conStatus}
               </Text>
             </View>
             {/* <View style={{ padding: 60, backgroundColor: "red" }}></View> */}

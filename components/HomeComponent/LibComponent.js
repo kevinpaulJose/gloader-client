@@ -40,14 +40,14 @@ class LibComponent extends React.Component {
 
   render() {
     return (
-      <View
+      <ScrollView
         style={{
-          height: windowheight - 130 + 10,
+          height: windowheight - 130 + 50,
           backgroundColor: theme.blank,
           width: windowwidth,
-          marginTop: 10,
+          marginTop: -100,
         }}
-      ></View>
+      ></ScrollView>
     );
   }
 }

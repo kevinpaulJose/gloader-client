@@ -7,6 +7,7 @@ const windowwidth = Dimensions.get("window").width;
 const windowheight = Dimensions.get("window").height;
 
 const OngoingDnldComponent = (props) => {
+  // alert(props.currentStatus);
   return (
     <View>
       <View
@@ -93,6 +94,11 @@ const OngoingDnldComponent = (props) => {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, color: theme.mediumLightText }}>
                 {props.completed} / {props.total}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12, color: theme.mediumLightText }}>
+                {"status:"} {props.currentStatus.toLowerCase()}
               </Text>
             </View>
           </View>

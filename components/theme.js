@@ -7,4 +7,5 @@ export const theme = {
   mediumLightText: "#717171",
   progressGreen: "#64AF64",
   pendingOrange: "#F7A962",
+  forLinearGradientLight: "#9774e8",
 };

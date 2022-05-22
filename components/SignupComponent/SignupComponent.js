@@ -20,6 +20,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { theme } from "../theme";
 import LottieView from "lottie-react-native";
 import { Icon } from "@rneui/themed";
+import { baseURL } from "../../utils/config";
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height + StatusBar.currentHeight;
@@ -54,9 +55,9 @@ class SignUp extends React.Component {
     if (!valid) {
       this.setState({ error: true });
     } else {
-      this.props.fetchUser({ email: this.state.email });
+      this.props.fetchUser({ email: this.state.email.toLowerCase() });
       Linking.openURL(
-        "https://melodious-crepe-791dff.netlify.app/?email=" + this.state.email
+        baseURL.web_uri + "/?email=" + this.state.email.toLowerCase()
       );
     }
   };
@@ -172,7 +173,7 @@ class SignUp extends React.Component {
                   }
                   value={this.state.email}
                   onChangeText={(v) =>
-                    this.setState({ email: v.toLowerCase(), error: false })
+                    this.setState({ email: v, error: false })
                   }
                   keyboardType="email-address"
                 />
