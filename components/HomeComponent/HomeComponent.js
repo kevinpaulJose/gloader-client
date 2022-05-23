@@ -58,7 +58,7 @@ class Home extends React.Component {
     currentTab: "track",
     conStatus: "connected",
     onPressIn: false,
-    logOutModalVisible: true,
+    logOutModalVisible: false,
     logoutLoading: false,
   };
   animatedValue = new Animated.Value(windowheight / 3 + 100);
@@ -78,50 +78,8 @@ class Home extends React.Component {
     }).start;
   };
 
-  _NewTaskIcon = () => {
-    return (
-      <TouchableOpacity
-        style={{
-          width: windowwidth / 2 - 40,
-          backgroundColor: theme.mainLight,
-          alignItems: "center",
-          justifyContent: "center",
-          height: 40,
-          marginTop: 10,
-          marginLeft: 10,
-          zIndex: 10,
-          position: "absolute",
-          // top: windowheight / 2 + 70,
-          alignSelf: "center",
-          bottom: 10,
-        }}
-        activeOpacity={1}
-        onPressIn={() => this.setState({ onPressIn: true })}
-        onPressOut={() => this.setState({ onPressIn: false })}
-      >
-        <View
-          style={{
-            width: windowwidth / 2 - 40,
-            backgroundColor: theme.mainDark,
-            alignItems: "center",
-            justifyContent: "center",
-            height: 40,
-            marginTop: this.state.onPressIn ? 0 : -10,
-            marginLeft: this.state.onPressIn ? 0 : -10,
-          }}
-        >
-          <Text
-            style={{ fontWeight: "bold", fontSize: 16, color: theme.blank }}
-          >
-            + URL
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   componentDidMount() {
-    this._checkRefreshToken();
+    // this._checkRefreshToken();
   }
 
   _checkRefreshToken = async () => {
@@ -570,7 +528,7 @@ class Home extends React.Component {
             </View>
           )}
         </LinearGradient>
-        {this.state.currentTab == "track" && <this._NewTaskIcon />}
+        {/* {this.state.currentTab == "track" && <this._NewTaskIcon />} */}
         <this._logoutModal />
 
         <StatusBar backgroundColor={theme.mainDark} />
