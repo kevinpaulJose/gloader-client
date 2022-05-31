@@ -11,19 +11,16 @@ import {
   View,
 } from "react-native";
 // import * as google from "googleapis";
-import * as axios from "axios";
-import * as WebBrowser from "expo-web-browser";
 import { connect } from "react-redux";
 import { fetchUser, removeUser } from "../redux/ActionCreators";
 import { theme } from "../theme";
-import { LinearGradient } from "expo-linear-gradient";
-import HeaderTextComponent from "../common/HeaderTextComponent";
 import OngoingDnldComponent from "../common/Track/OngoingDnldComponent";
 import { Text } from "react-native";
 import PendingDnldComponent from "../common/Track/PendingDnld";
 import {
   getAllDownloads,
   getAllUploads,
+  getDownloadsID,
   uploadImg,
 } from "../../utils/firebase/functions";
 import LottieView from "lottie-react-native";
@@ -33,9 +30,16 @@ import { Icon, Image } from "@rneui/base";
 import hasMediaLibraryPermissionGranted from "../../utils/hasLibraryPermissionsGranted";
 import { Linking } from "react-native";
 import uploadImageFromDevice from "../../utils/uploadImageFromDevice";
-import getBlobFroUri from "../../utils/getBlobFromURI";
-import * as FileSystem from "expo-file-system";
 import { baseURL } from "../../utils/config";
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import { firedb } from "../../utils/firebase/config";
 
 const mapStateToProps = (state) => {
   return {
@@ -49,6 +53,8 @@ const mapDispatchToProps = (dispatch) => ({
   fetchUser: ({ email }) => dispatch(fetchUser({ email: email })),
   removeUser: ({ token, og }) => dispatch(removeUser({ token, og })),
 });
+
+const unsub = () => {};
 
 class TrackComponent extends React.Component {
   componentDidMount() {
@@ -81,6 +87,7 @@ class TrackComponent extends React.Component {
     localImgURI: "",
     fileNameError: false,
     URLError: false,
+    runningSync: false,
   };
   fetchCopiedText = async () => {
     const text = await Clipboard.getStringAsync();
@@ -90,55 +97,82 @@ class TrackComponent extends React.Component {
   };
 
   _getDownloads = async () => {
-    console.log("---------------- Getting downloads ----------------");
-    let completed = [];
-    let currentStatus = "";
-    let currentUpload = [];
     this.setState({ isLoading: true });
-    const allDownloads = await getAllDownloads(this.props.user.data[0].id);
-    const uploadData = await getAllUploads(this.props.user.data[0].id);
-    let pendingDownloads = allDownloads.filter((p) => p.status == "Pending");
-    // console.log(uploadData);
-    let dnlding = allDownloads.filter((v) => v.status === "Downloading");
-    if (dnlding.length > 0) {
-      currentUpload = uploadData.filter((v) => v.downloadId === dnlding[0].id);
-      currentStatus =
-        currentUpload.length == 0 ? "pending" : currentUpload[0].status;
-    }
-
-    allDownloads.forEach((v) => {
-      if (v.status == "Completed") {
-        let correspondingUpload = uploadData.filter(
-          (vl) => vl.downloadId == v.id
+    if (!this.state.runningSync) {
+      this.setState({ runningSync: true });
+      let interval = setInterval(async () => {
+        console.log("---------------- Getting downloads ----------------");
+        let completed = [];
+        let currentStatus = "";
+        let currentUpload = [];
+        // this.setState({ isLoading: true });
+        const allDownloads = await getAllDownloads(this.props.user.data[0].id);
+        const uploadData = await getAllUploads(this.props.user.data[0].id);
+        let pendingDownloads = allDownloads.filter(
+          (p) => p.status == "Pending"
         );
-        // console.log("currespo:" + uploadData.length);
-        correspondingUpload.forEach((val) => {
-          if (val.status == "Completed") {
-            let completedDownlads = allDownloads.filter(
-              (vls) => vls.id == val.downloadId
+        // console.log(uploadData);
+        let dnlding = allDownloads.filter((v) => v.status === "Downloading");
+        console.log("PendingDonwloads: " + this.state.pendingDownloads.length);
+        console.log("Downloading: " + this.state.downloading.length);
+        if (
+          this.state.pendingDownloads.length == 0 &&
+          this.state.downloading.length == 0 &&
+          pendingDownloads.length == 0 &&
+          dnlding.length == 0
+        ) {
+          console.log("Nothing found");
+          clearInterval(interval);
+          this.setState({ runningSync: false, isLoading: false });
+        } else {
+          if (dnlding.length > 0) {
+            currentUpload = uploadData.filter(
+              (v) => v.downloadId === dnlding[0].id
             );
-            completed.push(completedDownlads);
+            currentStatus =
+              currentUpload.length == 0 ? "pending" : currentUpload[0].status;
           } else {
-            currentStatus = val.status;
-            currentUpload = [val];
-            dnlding = allDownloads.filter((dnld) => dnld.id == val.downloadId);
+            this.setState({ downloading: [] });
           }
-        });
-      }
-    });
-    console.log("Downloading: " + dnlding.length);
-    console.log("CurrentUpload: " + currentUpload.length);
-    console.log("CurrentStatis: " + currentStatus);
-    console.log("Completed: " + completed.length);
-    console.log("Pending: " + pendingDownloads.length);
-    this.setState({
-      isLoading: false,
-      allDnlds: allDownloads,
-      downloading: dnlding,
-      uploadStatus: currentStatus,
-      completed: completed,
-      pendingDownloads: pendingDownloads,
-    });
+
+          allDownloads.forEach((v) => {
+            if (v.status == "Completed") {
+              let correspondingUpload = uploadData.filter(
+                (vl) => vl.downloadId == v.id
+              );
+              // console.log("currespo:" + uploadData.length);
+              correspondingUpload.forEach((val) => {
+                if (val.status == "Completed") {
+                  let completedDownlads = allDownloads.filter(
+                    (vls) => vls.id == val.downloadId
+                  );
+                  completed.push(completedDownlads);
+                } else {
+                  currentStatus = val.status;
+                  currentUpload = [val];
+                  dnlding = allDownloads.filter(
+                    (dnld) => dnld.id == val.downloadId
+                  );
+                }
+              });
+            }
+          });
+          console.log("Downloading: " + dnlding.length);
+          console.log("CurrentUpload: " + currentUpload.length);
+          console.log("CurrentStatis: " + currentStatus);
+          console.log("Completed: " + completed.length);
+          console.log("Pending: " + pendingDownloads.length);
+          this.setState({
+            isLoading: false,
+            allDnlds: allDownloads,
+            downloading: dnlding,
+            uploadStatus: currentStatus,
+            completed: completed,
+            pendingDownloads: pendingDownloads,
+          });
+        }
+      }, 6000);
+    }
   };
   getPercentage = (percentage) => {
     return percentage.split(".")[0].toString() + "%";
@@ -231,12 +265,46 @@ class TrackComponent extends React.Component {
         .then((res) => {
           console.log("Download added");
           this.setState({ newModalVisible: false });
+          this._getDownloads();
+          // if (this.state.downloading.length > 0) {
+          //   let temp = this.state.pendingDownloads;
+          //   temp.push(data);
+          //   this.setState({ pendingDownloads: temp });
+          // } else {
+          //   this._listenChanges(data);
+          // }
         })
         .catch((e) => {
           console.error(e);
         });
     }
   };
+
+  // _listenChanges = async (obj) => {
+  //   let docId = "Some";
+  //   setTimeout(async () => {
+  //     console.log("Listening changes");
+  //     console.log("getting data with = " + obj.id);
+  //     const downloadRef = collection(firedb, "downloads");
+  //     const q = query(downloadRef, where("id", "==", obj.id));
+  //     const querySnapshot = await getDocs(q);
+  //     querySnapshot.forEach((doc) => {
+  //       docId = doc.id;
+  //     });
+  //     unsub = onSnapshot(doc(firedb, "downloads", docId), (doc) => {
+  //       console.log("Current data: ", doc.data());
+  //       this.setState({ downloading: [doc.data()] });
+  //       if (doc.data().status == "Completed") {
+  //         unsub();
+  //       }
+  //     });
+  //   }, 4000);
+  //   console.log(docId);
+  // };
+
+  componentDidMount() {
+    this._getDownloads();
+  }
 
   _getPermissionAlert = () => {
     if (!this.state.deniedPermission) {
@@ -299,6 +367,45 @@ class TrackComponent extends React.Component {
       default:
         this.setState({ icon: require("../../assets/images/default.png") });
         break;
+    }
+  };
+
+  _getFileTypeForCard = (fileName) => {
+    let fileType = "common";
+
+    const mediaType = ["mp4", "mkv", "mov", "wmv", "avi", "webm"];
+    const archiveType = ["zip", "rar", "exe", "bin", "msi", "7z"];
+    const vrType = ["3dh", "3dv", "180x180", "360_", "3D-SBS", "3d-OU"];
+    let ext = fileName.split(".").pop();
+    if (mediaType.includes(ext)) {
+      fileType = "media";
+    }
+    if (archiveType.includes(ext)) {
+      fileType = "archive";
+    }
+    vrType.forEach((v, i) => {
+      if (fileName.toLowerCase().indexOf(v.toLowerCase()) !== -1) {
+        fileType = "vr";
+      }
+    });
+
+    console.log(fileType);
+    switch (fileType) {
+      case "media":
+        return {
+          icon: require("../../assets/images/video.png"),
+          type: fileType,
+        };
+      case "vr":
+        return {
+          icon: require("../../assets/images/vr.png"),
+          type: fileType,
+        };
+      default:
+        return {
+          icon: require("../../assets/images/default.png"),
+          type: fileType,
+        };
     }
   };
   _newtModal = () => {
@@ -648,6 +755,13 @@ class TrackComponent extends React.Component {
             width: windowwidth,
           }}
         >
+          {this.state.isLoading ? (
+            <View>
+              <Text>Loaidng</Text>
+            </View>
+          ) : (
+            <></>
+          )}
           {this.state.downloading.length > 0 && (
             <View>
               <View style={{ marginLeft: 20, marginTop: 20 }}>
@@ -656,51 +770,66 @@ class TrackComponent extends React.Component {
                 </Text>
               </View>
               {this.state.downloading.map((v, i) => {
-                console.log(this.getPercentage(v.percentage));
+                // console.log(this.getPercentage(v.percentage));
                 return (
                   <View style={{ alignSelf: "center", marginTop: 10 }}>
                     <OngoingDnldComponent
-                      img={require("../../assets/images/video.png")}
+                      img={this._getFileTypeForCard(v.fileName).icon}
                       fileName={v.fileName}
-                      category={"Video"}
+                      category={this._getFileTypeForCard(v.fileName).type}
                       folderName={v.folderName}
                       total={v.total + " MB"}
                       completed={v.completed + " MB"}
                       isURL={false}
                       percentage={this.getPercentage(v.percentage)}
                       currentStatus={this.state.uploadStatus}
+                      id={v.id}
                     />
                   </View>
                 );
               })}
-              {/* <View style={{ alignSelf: "center", marginTop: 10 }}>
-                <OngoingDnldComponent
-                  img={require("../../assets/images/video.png")}
-                  fileName={"Windows10_iso.7z"}
-                  category={"video"}
-                  folderName={"cartoons"}
-                  total={"800.1 MB"}
-                  completed={"220.4"}
-                  isURL={false}
-                  percentage={"80%"}
-                  currentStatus={"Downloading"}
-                />
-              </View> */}
-
-              {/* <View style={{ alignSelf: "center", marginTop: 10 }}>
-                <OngoingDnldComponent
-                  img={require("../../assets/images/video.png")}
-                  fileName={v.fileName}
-                  category={"Video"}
-                  folderName={v.folderName}
-                  total={v.total + " MB"}
-                  completed={v.completed + " MB"}
-                  isURL={false}
-                  percentage={v.percentage}
-                />
-              </View> */}
             </View>
           )}
+
+          <View>
+            <View style={{ marginLeft: 20, marginTop: 20 }}>
+              <Text style={{ color: theme.secondryText, fontSize: 16 }}>
+                active
+              </Text>
+            </View>
+
+            <View style={{ alignSelf: "center", marginTop: 10 }}>
+              <OngoingDnldComponent
+                img={this._getFileTypeForCard("test.mp4").icon}
+                fileName={"test.mp4"}
+                category={this._getFileTypeForCard("test.mp4").type}
+                folderName={"gloader"}
+                total={"100"}
+                completed={"50" + " MB"}
+                isURL={false}
+                percentage={this.getPercentage("50.0%")}
+                currentStatus={"pending"}
+                id={"2"}
+              />
+            </View>
+          </View>
+
+          <View>
+            <View style={{ marginLeft: 20, marginTop: 20 }}>
+              <Text style={{ color: theme.secondryText, fontSize: 16 }}>
+                pending
+              </Text>
+            </View>
+
+            <View style={{ alignSelf: "center", marginTop: 10 }}>
+              <PendingDnldComponent
+                fileName={"test.mp4"}
+                category={this._getFileTypeForCard("test.mp4").type}
+                folderName={"test.mp4"}
+                total={"0"}
+              />
+            </View>
+          </View>
 
           {this.state.pendingDownloads.length > 0 && (
             <View>
@@ -709,14 +838,19 @@ class TrackComponent extends React.Component {
                   pending
                 </Text>
               </View>
-              <View style={{ alignSelf: "center", marginTop: 10 }}>
-                <PendingDnldComponent
-                  fileName={"Windows10_iso.7z"}
-                  category={"video"}
-                  folderName={"cartoons"}
-                  total={"800.1 MB"}
-                />
-              </View>
+              {this.state.pendingDownloads.map((v, i) => {
+                // console.log("Pending" + JSON.stringify(v));
+                return (
+                  <View style={{ alignSelf: "center", marginTop: 10 }}>
+                    <PendingDnldComponent
+                      fileName={v.fileName}
+                      category={this._getFileTypeForCard(v.fileName).type}
+                      folderName={v.folderName}
+                      total={v.total}
+                    />
+                  </View>
+                );
+              })}
             </View>
           )}
           {this.state.pendingDownloads.length == 0 &&

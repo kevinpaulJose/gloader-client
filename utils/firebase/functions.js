@@ -33,6 +33,16 @@ export const getDownloadsWithID = async (did) => {
   return retData;
 };
 
+export const getDownloadsID = async (did) => {
+  console.log("getting data with = " + did);
+  const downloadRef = collection(firedb, "downloads");
+  const q = query(downloadRef, where("id", "==", did));
+  const querySnapshot = await getDocs(q);
+  querySnapshot.forEach((doc) => {
+    alert(doc.id);
+  });
+};
+
 export const getUploadsWithID = async (did) => {
   // console.log("getting data with = " + did);
   const downloadRef = collection(firedb, "uploads");

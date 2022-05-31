@@ -1,6 +1,6 @@
 import { Image, ScreenWidth } from "@rneui/base";
 import React from "react";
-import { Dimensions, Text, View } from "react-native";
+import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../../theme";
 
 const windowwidth = Dimensions.get("window").width;
@@ -9,7 +9,7 @@ const windowheight = Dimensions.get("window").height;
 const OngoingDnldComponent = (props) => {
   // alert(props.currentStatus);
   return (
-    <View>
+    <View key={props.id}>
       <View
         style={{
           flexDirection: "row",
@@ -49,6 +49,29 @@ const OngoingDnldComponent = (props) => {
             />
           )}
         </View>
+        <TouchableOpacity
+          style={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            width: 20,
+            height: 20,
+            // backgroundColor: "blue",
+            alignItems: "flex-end",
+            // justifyContent: "center",
+            zIndex: 100,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: theme.pendingOrange,
+              width: 10,
+              height: 3,
+              borderRadius: 100,
+            }}
+          ></View>
+        </TouchableOpacity>
+
         <View style={{ flex: 2.3 }}>
           <View
             style={{

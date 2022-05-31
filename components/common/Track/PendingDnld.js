@@ -1,5 +1,6 @@
 import { Image, ScreenWidth } from "@rneui/base";
 import React from "react";
+import { TouchableOpacity } from "react-native";
 import { Dimensions, Text, View } from "react-native";
 import { theme } from "../../theme";
 
@@ -26,6 +27,28 @@ const PendingDnldComponent = (props) => {
           elevation: 3,
         }}
       >
+        <TouchableOpacity
+          style={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            width: 20,
+            height: 20,
+            // backgroundColor: "blue",
+            alignItems: "flex-end",
+            // justifyContent: "center",
+            zIndex: 100,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: theme.pendingOrange,
+              width: 10,
+              height: 3,
+              borderRadius: 100,
+            }}
+          ></View>
+        </TouchableOpacity>
         <View
           style={{
             flex: 0.5,
@@ -78,7 +101,7 @@ const PendingDnldComponent = (props) => {
             </View>
           </View>
         </View>
-        <View
+        {/* <View
           style={{
             flex: 1,
             // backgroundColor: "red",
@@ -89,7 +112,7 @@ const PendingDnldComponent = (props) => {
           <Text style={{ color: theme.mediumLightText, fontSize: 12 }}>
             {props.total}
           </Text>
-        </View>
+        </View> */}
       </View>
     </View>
   );
