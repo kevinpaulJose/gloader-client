@@ -1,13 +1,28 @@
 import { Image, ScreenWidth } from "@rneui/base";
 import React from "react";
+import { Alert } from "react-native";
 import { TouchableOpacity } from "react-native";
 import { Dimensions, Text, View } from "react-native";
+import { deletePending } from "../../../utils/firebase/functions";
 import { theme } from "../../theme";
 
 const windowwidth = Dimensions.get("window").width;
 const windowheight = Dimensions.get("window").height;
 
 const PendingDnldComponent = (props) => {
+  const _renderRemoveActiveAlert = () =>
+    Alert.alert(
+      "Remove download",
+      `This will remove ${props.fileName}. Continue?`,
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel",
+        },
+        { text: "Stop", onPress: () => deletePending(props.id) },
+      ]
+    );
   return (
     <View>
       <View
@@ -28,6 +43,7 @@ const PendingDnldComponent = (props) => {
         }}
       >
         <TouchableOpacity
+          onPress={_renderRemoveActiveAlert}
           style={{
             position: "absolute",
             right: 8,
@@ -47,7 +63,7 @@ const PendingDnldComponent = (props) => {
               height: 3,
               borderRadius: 100,
             }}
-          ></View>
+          />
         </TouchableOpacity>
         <View
           style={{

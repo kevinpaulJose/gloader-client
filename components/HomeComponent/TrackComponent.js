@@ -116,14 +116,19 @@ class TrackComponent extends React.Component {
         console.log("PendingDonwloads: " + this.state.pendingDownloads.length);
         console.log("Downloading: " + this.state.downloading.length);
         if (
-          this.state.pendingDownloads.length == 0 &&
-          this.state.downloading.length == 0 &&
+          // this.state.pendingDownloads.length == 0 &&
+          // this.state.downloading.length == 0 &&
           pendingDownloads.length == 0 &&
           dnlding.length == 0
         ) {
           console.log("Nothing found");
+          this.setState({
+            runningSync: false,
+            isLoading: false,
+            downloading: [],
+            pendingDownloads: [],
+          });
           clearInterval(interval);
-          this.setState({ runningSync: false, isLoading: false });
         } else {
           if (dnlding.length > 0) {
             currentUpload = uploadData.filter(
@@ -279,28 +284,6 @@ class TrackComponent extends React.Component {
         });
     }
   };
-
-  // _listenChanges = async (obj) => {
-  //   let docId = "Some";
-  //   setTimeout(async () => {
-  //     console.log("Listening changes");
-  //     console.log("getting data with = " + obj.id);
-  //     const downloadRef = collection(firedb, "downloads");
-  //     const q = query(downloadRef, where("id", "==", obj.id));
-  //     const querySnapshot = await getDocs(q);
-  //     querySnapshot.forEach((doc) => {
-  //       docId = doc.id;
-  //     });
-  //     unsub = onSnapshot(doc(firedb, "downloads", docId), (doc) => {
-  //       console.log("Current data: ", doc.data());
-  //       this.setState({ downloading: [doc.data()] });
-  //       if (doc.data().status == "Completed") {
-  //         unsub();
-  //       }
-  //     });
-  //   }, 4000);
-  //   console.log(docId);
-  // };
 
   componentDidMount() {
     this._getDownloads();
@@ -713,6 +696,7 @@ class TrackComponent extends React.Component {
           alignSelf: "center",
           bottom: 10,
         }}
+        disabled={this.state.isLoading}
         activeOpacity={1}
         onPressIn={() => this.setState({ onPressIn: true })}
         onPressOut={() => {
@@ -743,6 +727,7 @@ class TrackComponent extends React.Component {
       </TouchableOpacity>
     );
   };
+
   render() {
     return (
       <View style={{ marginTop: 10, height: windowheight / 2 + 150 }}>
@@ -757,12 +742,26 @@ class TrackComponent extends React.Component {
         >
           {this.state.isLoading ? (
             <View>
-              <Text>Loaidng</Text>
+              <LottieView
+                style={{
+                  width: windowwidth / 2 + 20,
+                  height: windowwidth / 2 + 20,
+                  alignSelf: "center",
+                  // marginTop: 100,
+                  // marginLeft: -5,
+                  marginTop: 20,
+                }}
+                source={require("../../assets/lottie/loading.json")}
+                autoPlay
+                loop={true}
+                // backgroundColor={"red"}
+                resizeMode="contain"
+              />
             </View>
           ) : (
             <></>
           )}
-          {this.state.downloading.length > 0 && (
+          {this.state.downloading.length > 0 && !this.state.isLoading && (
             <View>
               <View style={{ marginLeft: 20, marginTop: 20 }}>
                 <Text style={{ color: theme.secondryText, fontSize: 16 }}>
@@ -779,7 +778,7 @@ class TrackComponent extends React.Component {
                       category={this._getFileTypeForCard(v.fileName).type}
                       folderName={v.folderName}
                       total={v.total + " MB"}
-                      completed={v.completed + " MB"}
+                      completed={v.completed}
                       isURL={false}
                       percentage={this.getPercentage(v.percentage)}
                       currentStatus={this.state.uploadStatus}
@@ -791,7 +790,7 @@ class TrackComponent extends React.Component {
             </View>
           )}
 
-          <View>
+          {/* <View>
             <View style={{ marginLeft: 20, marginTop: 20 }}>
               <Text style={{ color: theme.secondryText, fontSize: 16 }}>
                 active
@@ -814,8 +813,8 @@ class TrackComponent extends React.Component {
             </View>
           </View>
 
-          <View>
-            <View style={{ marginLeft: 20, marginTop: 20 }}>
+          <ScrollView style={{ height: windowheight / 3 + 30, marginTop: 20 }}>
+            <View style={{ marginLeft: 20 }}>
               <Text style={{ color: theme.secondryText, fontSize: 16 }}>
                 pending
               </Text>
@@ -829,11 +828,45 @@ class TrackComponent extends React.Component {
                 total={"0"}
               />
             </View>
-          </View>
+            <View style={{ alignSelf: "center", marginTop: 10 }}>
+              <PendingDnldComponent
+                fileName={"test.mp4"}
+                category={this._getFileTypeForCard("test.mp4").type}
+                folderName={"test.mp4"}
+                total={"0"}
+              />
+            </View>
+            <View style={{ alignSelf: "center", marginTop: 10 }}>
+              <PendingDnldComponent
+                fileName={"test.mp4"}
+                category={this._getFileTypeForCard("test.mp4").type}
+                folderName={"test.mp4"}
+                total={"0"}
+              />
+            </View>
+            <View style={{ alignSelf: "center", marginTop: 10 }}>
+              <PendingDnldComponent
+                fileName={"test.mp4"}
+                category={this._getFileTypeForCard("test.mp4").type}
+                folderName={"test.mp4"}
+                total={"0"}
+              />
+            </View>
+            <View style={{ alignSelf: "center", marginTop: 10 }}>
+              <PendingDnldComponent
+                fileName={"test.mp4"}
+                category={this._getFileTypeForCard("test.mp4").type}
+                folderName={"test.mp4"}
+                total={"0"}
+              />
+            </View>
+          </ScrollView> */}
 
-          {this.state.pendingDownloads.length > 0 && (
-            <View>
-              <View style={{ marginLeft: 20, marginTop: 20 }}>
+          {this.state.pendingDownloads.length > 0 && !this.state.isLoading && (
+            <ScrollView
+              style={{ height: windowheight / 3 + 30, marginTop: 20 }}
+            >
+              <View style={{ marginLeft: 20 }}>
                 <Text style={{ color: theme.secondryText, fontSize: 16 }}>
                   pending
                 </Text>
@@ -847,14 +880,16 @@ class TrackComponent extends React.Component {
                       category={this._getFileTypeForCard(v.fileName).type}
                       folderName={v.folderName}
                       total={v.total}
+                      id={v.id}
                     />
                   </View>
                 );
               })}
-            </View>
+            </ScrollView>
           )}
           {this.state.pendingDownloads.length == 0 &&
-          this.state.downloading.length == 0 ? (
+          this.state.downloading.length == 0 &&
+          !this.state.isLoading ? (
             <LottieView
               style={{
                 width: windowwidth / 2,

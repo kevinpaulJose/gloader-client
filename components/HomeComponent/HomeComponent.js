@@ -54,8 +54,10 @@ const mapDispatchToProps = (dispatch) => ({
 
 class Home extends React.Component {
   state = {
-    headerShown: true,
-    currentTab: "track",
+    headerShown: false,
+    currentTab: "library",
+    // headerShown: true,
+    // currentTab: "track",
     conStatus: "connected",
     onPressIn: false,
     logOutModalVisible: false,

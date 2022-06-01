@@ -8,4 +8,5 @@ export const theme = {
   progressGreen: "#64AF64",
   pendingOrange: "#F7A962",
   forLinearGradientLight: "#9774e8",
+  veryLightBG: "#dedede",
 };
