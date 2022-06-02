@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Linking,
   ScrollView,
@@ -20,6 +21,7 @@ import { theme } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import HeaderTextComponent from "../common/HeaderTextComponent";
 import {
+  deleteFolder,
   getAllUploads,
   getDownloadsWithID,
 } from "../../utils/firebase/functions";
@@ -29,6 +31,7 @@ import { Icon, Image, Input } from "@rneui/base";
 import LottieView from "lottie-react-native";
 import { generateAccessToken } from "../../utils/getDriveLink";
 import { baseURL } from "../../utils/config";
+import FileViewComponent from "../common/Library/FileViewComponent";
 
 const mapStateToProps = (state) => {
   return {
@@ -62,6 +65,7 @@ class LibComponent extends React.Component {
     files: [],
     actualFiles: [],
     access_token: "",
+    loadingFiles: true,
   };
 
   getCompletedUploads = async () => {
@@ -80,6 +84,7 @@ class LibComponent extends React.Component {
             url: "nothing",
             driveURL: "",
             folderId: v.folderId,
+            downlaodDate: "",
           },
         ],
         id: v.id,
@@ -177,6 +182,7 @@ class LibComponent extends React.Component {
   };
 
   getFileImage = async (files) => {
+    this.setState({ loadingFiles: true });
     let filesWithImg = files;
     for (const file of files) {
       const correspondingDownload = await getDownloadsWithID(file.downloadId);
@@ -196,11 +202,37 @@ class LibComponent extends React.Component {
           filesWithImg[
             index
           ].driveURL = `https://drive.google.com/file/d/${fileFromDrive[0].id}/view?usp=sharing`;
-          console.log(correspondingDownload[0].img);
+          // console.log(correspondingDownload[0].added.seconds);
+          filesWithImg[index].downlaodDate =
+            correspondingDownload[0].added.toDate();
         });
     }
-    // console.log(filesWithImg);
-    this.setState({ files: filesWithImg });
+    filesWithImg.sort((a, b) => a.downlaodDate - b.downlaodDate);
+    this.setState({ files: filesWithImg, loadingFiles: false });
+  };
+
+  deleteAlert = async (folderName) => {
+    return Alert.alert(
+      "Delete " + folderName + "?",
+      "This will NOT delete the folder from Google Drive",
+      [
+        {
+          text: "Cancel",
+          onPress: () => {
+            console.log("Cancel Pressed");
+          },
+          style: "cancel",
+        },
+        {
+          text: "DELETE",
+          onPress: async () => {
+            this.setState({ isLoading: true });
+            const res = await deleteFolder(folderName);
+            this.getCompletedUploads();
+          },
+        },
+      ]
+    );
   };
 
   render() {
@@ -208,7 +240,7 @@ class LibComponent extends React.Component {
       <ScrollView
         style={{
           height: windowheight - 130 + 50,
-          backgroundColor: theme.blank,
+          backgroundColor: theme.darkBG,
           width: windowwidth,
           marginTop: -100,
         }}
@@ -222,7 +254,7 @@ class LibComponent extends React.Component {
             <Icon
               name="return-down-back"
               type="ionicon"
-              color={theme.mainDark}
+              color={theme.blank}
               size={25}
               containerStyle={{ alignSelf: "flex-end", marginRight: 5 }}
             />
@@ -272,8 +304,8 @@ class LibComponent extends React.Component {
                     style={{
                       backgroundColor:
                         this.state.selectedDimension.name == item.name
-                          ? theme.mainLight
-                          : theme.blank,
+                          ? theme.darkestBG
+                          : theme.darkBG,
                       alignItems: "center",
                       borderRadius: 10,
                     }}
@@ -293,7 +325,7 @@ class LibComponent extends React.Component {
               this.state.currentView != "folder" && (
                 <View
                   style={{
-                    backgroundColor: theme.veryLightBG,
+                    backgroundColor: theme.darkestBG,
                   }}
                 >
                   <TextInput
@@ -302,10 +334,11 @@ class LibComponent extends React.Component {
                       padding: 8,
                       textAlign: "center",
                       fontSize: 14,
-                      color: theme.mediumLightText,
+                      color: theme.blank,
                     }}
                     onChangeText={(text) => this.searchData(text)}
                     placeholder="search for files"
+                    placeholderTextColor={theme.textforDarkBG}
                   />
                 </View>
               )}
@@ -317,6 +350,7 @@ class LibComponent extends React.Component {
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     activeOpacity={1}
+                    onLongPress={() => this.deleteAlert(item.folderName)}
                     onPress={() => {
                       this.setFiles(item.folderId);
                       // console.log("done");
@@ -338,13 +372,18 @@ class LibComponent extends React.Component {
                       style={{
                         marginTop: 3,
                         fontSize: 12,
-                        color: theme.mediumLightText,
+                        color: theme.blank,
                       }}
                     >
                       {item.folderName}
                     </Text>
                   </TouchableOpacity>
                 )}
+              />
+            ) : this.state.loadingFiles ? (
+              <ActivityIndicator
+                color={theme.blank}
+                style={{ marginTop: 20 }}
               />
             ) : (
               <FlatGrid
@@ -363,41 +402,29 @@ class LibComponent extends React.Component {
                       height: this.state.selectedDimension.size,
                       alignItems: "center",
                       justifyContent: "center",
+                      backgroundColor: theme.darkestBG,
+                      borderRadius: 5,
                     }}
                   >
-                    <Image
-                      source={
+                    {/* <View></View> */}
+                    <FileViewComponent
+                      fileName={item.fileName}
+                      width={
                         item.url == "nothing"
-                          ? this._getFileType(item.fileName)
-                          : { uri: item.url }
+                          ? this.state.selectedDimension.size - 60
+                          : this.state.selectedDimension.size
                       }
-                      PlaceholderContent={<ActivityIndicator />}
-                      style={{
-                        width:
-                          item.url == "nothing"
-                            ? this.state.selectedDimension.size - 60
-                            : this.state.selectedDimension.size,
-                        height:
-                          item.url == "nothing"
-                            ? this.state.selectedDimension.size - 60
-                            : this.state.selectedDimension.name == "large"
-                            ? this.state.selectedDimension.size - 100
-                            : this.state.selectedDimension.name == "medium"
-                            ? this.state.selectedDimension.size - 60
-                            : this.state.selectedDimension.size - 40,
-                        // resizeMode: "contain",
-                        // backgroundColor: "red",
-                      }}
+                      height={
+                        item.url == "nothing"
+                          ? this.state.selectedDimension.size - 60
+                          : this.state.selectedDimension.name == "large"
+                          ? this.state.selectedDimension.size - 100
+                          : this.state.selectedDimension.name == "medium"
+                          ? this.state.selectedDimension.size - 60
+                          : this.state.selectedDimension.size - 40
+                      }
+                      downloadId={item.downloadId}
                     />
-                    <Text
-                      style={{
-                        marginTop: 3,
-                        fontSize: 12,
-                        color: theme.mediumLightText,
-                      }}
-                    >
-                      {item.fileName}
-                    </Text>
                   </TouchableOpacity>
                 )}
               />

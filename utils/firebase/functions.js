@@ -17,7 +17,7 @@ import {
 } from "firebase/storage";
 
 export const getAllDownloads = async (uid) => {
-  console.log("getting data with = " + uid);
+  // console.log("getting data with = " + uid);
   const downloadRef = collection(firedb, "downloads");
   const q = query(downloadRef, where("userId", "==", uid));
   const querySnapshot = await getDocs(q);
@@ -29,7 +29,7 @@ export const getAllDownloads = async (uid) => {
   return retData;
 };
 export const getDownloadsWithID = async (did) => {
-  console.log("getting data with = " + did);
+  // console.log("getting data with = " + did);
   const downloadRef = collection(firedb, "downloads");
   const q = query(downloadRef, where("id", "==", did));
   const querySnapshot = await getDocs(q);
@@ -42,7 +42,7 @@ export const getDownloadsWithID = async (did) => {
 };
 
 export const getDownloadsID = async (did) => {
-  console.log("getting data with = " + did);
+  // console.log("getting data with = " + did);
   const downloadRef = collection(firedb, "downloads");
   const q = query(downloadRef, where("id", "==", did));
   const querySnapshot = await getDocs(q);
@@ -70,7 +70,7 @@ export const getUploadsWithID = async (did) => {
 };
 
 export const getAllUploads = async (uid) => {
-  console.log("getting upload with = " + uid);
+  // console.log("getting upload with = " + uid);
   const downloadRef = collection(firedb, "uploads");
   const q = query(downloadRef, where("userId", "==", uid));
   const querySnapshot = await getDocs(q);
@@ -83,8 +83,8 @@ export const getAllUploads = async (uid) => {
 };
 
 export const uploadImg = async (fileName, uri) => {
-  console.log(uri);
-  console.log("Uploading");
+  // console.log(uri);
+  // console.log("Uploading");
   const storageRef = ref(storage, fileName);
   const response = await fetch(uri);
 
@@ -118,4 +118,30 @@ export const deletePending = async (id) => {
     docId = doc.id;
   });
   await deleteDoc(doc(firedb, "downloads", docId));
+};
+
+export const deleteFolder = async (folderName) => {
+  const downloadRef = collection(firedb, "downloads");
+  const uploadRef = collection(firedb, "uploads");
+  const q = query(downloadRef, where("folderName", "==", folderName));
+  const querySnapshot = await getDocs(q);
+
+  let docId = [];
+  querySnapshot.forEach((doc) => {
+    docId[docId.length] = doc.id;
+  });
+
+  const qu = query(uploadRef, where("path", "==", folderName));
+  const querySnapshotu = await getDocs(qu);
+  let uploadId = [];
+  querySnapshotu.forEach((doc) => {
+    uploadId[uploadId.length] = doc.id;
+  });
+  for (const id of docId) {
+    await deleteDoc(doc(firedb, "downloads", id));
+  }
+  for (const id of uploadId) {
+    await deleteDoc(doc(firedb, "uploads", id));
+  }
+  return true;
 };

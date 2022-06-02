@@ -88,6 +88,7 @@ class TrackComponent extends React.Component {
     fileNameError: false,
     URLError: false,
     runningSync: false,
+    uploadingImage: false,
   };
   fetchCopiedText = async () => {
     const text = await Clipboard.getStringAsync();
@@ -221,6 +222,7 @@ class TrackComponent extends React.Component {
     console.log(hasPermission);
   };
   _uploadImage = async () => {
+    this.setState({ uploadingImage: true, onPressIn: true });
     let fileNameError = false;
     let URLError = false;
     if (this.state.formFileName == "") {
@@ -233,6 +235,7 @@ class TrackComponent extends React.Component {
     }
     if (fileNameError || URLError) {
       console.log("error");
+      this.setState({ uploadingImage: false, onPressIn: false });
     } else {
       let downloadId =
         this.props.user.data[0].id + "_" + new Date().getTime().toString();
@@ -245,14 +248,14 @@ class TrackComponent extends React.Component {
             "/" +
             downloadId +
             "_" +
-            this.state.formFileName,
+            this.state.formFileName.replace(" ", "_"),
           this.state.localImgURI
         );
         imgURL = downloadURL;
       }
       let data = {
         url: this.state.formURL,
-        filename: this.state.formFileName,
+        filename: this.state.formFileName.replace(" ", "_"),
         id: downloadId,
         folderName: this.state.formFolderName,
         token: this.props.user.data[0].refreshToken,
@@ -269,7 +272,11 @@ class TrackComponent extends React.Component {
       })
         .then((res) => {
           console.log("Download added");
-          this.setState({ newModalVisible: false });
+          this.setState({
+            uploadingImage: false,
+            onPressIn: false,
+            newModalVisible: false,
+          });
           this._getDownloads();
           // if (this.state.downloading.length > 0) {
           //   let temp = this.state.pendingDownloads;
@@ -659,7 +666,9 @@ class TrackComponent extends React.Component {
             <View
               style={{
                 width: windowwidth / 2 - 40,
-                backgroundColor: theme.mainDark,
+                backgroundColor: this.state.uploadingImage
+                  ? theme.mainLight
+                  : theme.mainDark,
                 alignItems: "center",
                 justifyContent: "center",
                 height: 40,
@@ -670,7 +679,7 @@ class TrackComponent extends React.Component {
               <Text
                 style={{ fontWeight: "bold", fontSize: 16, color: theme.blank }}
               >
-                add
+                {this.state.uploadingImage ? "..." : "add"}
               </Text>
             </View>
           </TouchableOpacity>

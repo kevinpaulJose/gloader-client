@@ -9,4 +9,7 @@ export const theme = {
   pendingOrange: "#F7A962",
   forLinearGradientLight: "#9774e8",
   veryLightBG: "#dedede",
+  darkBG: "#383838",
+  darkestBG: "#262626",
+  textforDarkBG: "#828282",
 };
