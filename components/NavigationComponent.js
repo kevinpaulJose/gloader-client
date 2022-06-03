@@ -7,6 +7,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { fetchUser } from "./redux/ActionCreators";
 import { connect } from "react-redux";
 import Home from "./HomeComponent/HomeComponent";
+import * as Linking from "expo-linking";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 
 const mapStateToProps = (state) => {
   return {
@@ -27,11 +29,21 @@ class Navigator extends React.Component {
     console.log(this.props.user);
   }
 
+  MyTabs = () => {
+    return (
+      <Tab.Navigator>
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Settings" component={SettingsScreen} />
+      </Tab.Navigator>
+    );
+  };
+
   render() {
     const Stack = createNativeStackNavigator();
+    const Tab = createMaterialTopTabNavigator();
     if (this.props.user.data.length == 0) {
       return (
-        <NavigationContainer>
+        <NavigationContainer linking={[Linking.createURL("/")]}>
           <Stack.Navigator
             initialRouteName="signup"
             screenOptions={{

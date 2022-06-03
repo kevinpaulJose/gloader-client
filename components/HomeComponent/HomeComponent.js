@@ -54,8 +54,8 @@ const mapDispatchToProps = (dispatch) => ({
 
 class Home extends React.Component {
   state = {
-    headerShown: false,
-    currentTab: "library",
+    headerShown: true,
+    currentTab: "track",
     // headerShown: true,
     // currentTab: "track",
     conStatus: "connected",
@@ -81,7 +81,7 @@ class Home extends React.Component {
   };
 
   componentDidMount() {
-    // this._checkRefreshToken();
+    this._checkRefreshToken();
   }
 
   _checkRefreshToken = async () => {
@@ -245,10 +245,18 @@ class Home extends React.Component {
               </Text>
               {this.state.conStatus == "connected" &&
                 (this.state.logoutLoading ? (
-                  <ActivityIndicator
-                    style={{ marginLeft: 5 }}
-                    color={theme.mainDark}
-                  />
+                  <View
+                    style={{
+                      flex: 1,
+                      marginLeft: 5,
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <ActivityIndicator
+                      style={{ marginLeft: 5 }}
+                      color={theme.mainDark}
+                    />
+                  </View>
                 ) : (
                   <TouchableOpacity
                     style={{

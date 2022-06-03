@@ -2,7 +2,7 @@
   "expo": {
     "name": "gloader-client",
     "slug": "gloader-client",
-    "scheme": "com.kjcreations.gloader",
+    "scheme": "gloader",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

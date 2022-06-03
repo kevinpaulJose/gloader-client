@@ -240,11 +240,33 @@ class LibComponent extends React.Component {
       <ScrollView
         style={{
           height: windowheight - 130 + 50,
-          backgroundColor: theme.darkBG,
+          backgroundColor:
+            !this.state.isLoading &&
+            (this.state.files.length != 0 || this.state.folders.length != 0)
+              ? theme.darkBG
+              : theme.blank,
           width: windowwidth,
           marginTop: -100,
         }}
       >
+        {!this.state.isLoading &&
+          this.state.files.length == 0 &&
+          this.state.folders.length == 0 && (
+            <LottieView
+              style={{
+                width: windowwidth / 2,
+                height: windowwidth / 2,
+                alignSelf: "center",
+                marginTop: 30,
+                marginLeft: -5,
+              }}
+              source={require("../../assets/lottie/no-downloads.json")}
+              autoPlay
+              // loop={false}
+              // backgroundColor={"red"}
+              resizeMode="contain"
+            />
+          )}
         {!this.state.isLoading && this.state.currentView != "folder" && (
           <TouchableOpacity
             style={{ position: "absolute", left: 20, top: 10 }}
