@@ -739,7 +739,7 @@ class TrackComponent extends React.Component {
 
   render() {
     return (
-      <View style={{ marginTop: 10, height: windowheight / 2 + 150 }}>
+      <View style={{ marginTop: 10, height: windowheight - 130 }}>
         <this._NewTaskIcon />
         <this._newtModal />
         <View
@@ -872,9 +872,7 @@ class TrackComponent extends React.Component {
           </ScrollView> */}
 
           {this.state.pendingDownloads.length > 0 && !this.state.isLoading && (
-            <ScrollView
-              style={{ height: windowheight / 3 + 30, marginTop: 20 }}
-            >
+            <ScrollView style={{ height: windowheight / 3, marginTop: 20 }}>
               <View style={{ marginLeft: 20 }}>
                 <Text style={{ color: theme.secondryText, fontSize: 16 }}>
                   pending

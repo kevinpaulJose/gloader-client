@@ -49,6 +49,7 @@ const mapDispatchToProps = (dispatch) => ({
 class LibComponent extends React.Component {
   componentDidMount() {
     this.getCompletedUploads();
+    // this.checkForTheme();
   }
   state = {
     isLoading: false,
@@ -246,7 +247,7 @@ class LibComponent extends React.Component {
               ? theme.darkBG
               : theme.blank,
           width: windowwidth,
-          marginTop: -100,
+          // marginTop: -100,
         }}
       >
         {!this.state.isLoading &&
@@ -269,7 +270,7 @@ class LibComponent extends React.Component {
           )}
         {!this.state.isLoading && this.state.currentView != "folder" && (
           <TouchableOpacity
-            style={{ position: "absolute", left: 20, top: 10 }}
+            style={{ position: "absolute", left: 20, top: 10, zIndex: 200 }}
             activeOpacity={1}
             onPress={() => this.setFiles("abc")}
           >

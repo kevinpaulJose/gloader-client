@@ -9,6 +9,9 @@ import { connect } from "react-redux";
 import Home from "./HomeComponent/HomeComponent";
 import * as Linking from "expo-linking";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import ListingComponent from "./ListingComponents/ListingComponent";
+import TrackComponent from "./HomeComponent/TrackComponent";
+import LibComponent from "./HomeComponent/LibComponent";
 
 const mapStateToProps = (state) => {
   return {
@@ -30,17 +33,20 @@ class Navigator extends React.Component {
   }
 
   MyTabs = () => {
+    const Tab = createMaterialTopTabNavigator();
     return (
       <Tab.Navigator>
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
+        <Tab.Screen name="Tasks" component={TrackComponent} />
+        <Tab.Screen name="Library" component={LibComponent} />
+        <Tab.Screen name="My Drive" component={ListingComponent} />
+        {/* <Tab.Screen name="Settings" component={SettingsScreen} /> */}
       </Tab.Navigator>
     );
   };
 
   render() {
     const Stack = createNativeStackNavigator();
-    const Tab = createMaterialTopTabNavigator();
+
     if (this.props.user.data.length == 0) {
       return (
         <NavigationContainer linking={[Linking.createURL("/")]}>
@@ -60,10 +66,12 @@ class Navigator extends React.Component {
           <Stack.Navigator
             initialRouteName="home"
             screenOptions={{
-              headerShown: false,
+              headerShown: true,
+              headerTitle: "Gloader",
             }}
           >
-            <Stack.Screen name="home" component={Home} />
+            <Stack.Screen name="home" component={this.MyTabs} />
+            {/* <this.MyTabs /> */}
           </Stack.Navigator>
         </NavigationContainer>
       );
