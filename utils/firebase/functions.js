@@ -68,6 +68,47 @@ export const getUploadsWithID = async (did) => {
   return retData;
   //   console.log(retData);
 };
+export const setUserId = async (gmail) => {
+  const userRef = collection(firedb, "users");
+  const q = query(userRef, where("gmail", "==", gmail));
+
+  const querySnapshot = await getDocs(q);
+  let docId = "";
+  querySnapshot.forEach((doc) => {
+    docId = doc.id;
+  });
+  const docRef = doc(firedb, "users", docId);
+  await updateDoc(docRef, {
+    used: 0,
+  });
+};
+
+export const getUserSize = async (gmail) => {
+  const userRef = collection(firedb, "users");
+  const q = query(userRef, where("gmail", "==", gmail));
+
+  const querySnapshot = await getDocs(q);
+  let size = 0;
+  querySnapshot.forEach((doc) => {
+    size = doc.data().used;
+  });
+  return size;
+};
+
+export const setUserUsed = async (gmail, used) => {
+  const userRef = collection(firedb, "users");
+  const q = query(userRef, where("gmail", "==", gmail));
+
+  const querySnapshot = await getDocs(q);
+  let docId = "";
+  querySnapshot.forEach((doc) => {
+    docId = doc.id;
+  });
+  const docRef = doc(firedb, "users", docId);
+  await updateDoc(docRef, {
+    used: used,
+  });
+};
 
 export const getAllUploads = async (uid) => {
   // console.log("getting upload with = " + uid);

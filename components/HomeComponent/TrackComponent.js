@@ -21,6 +21,8 @@ import {
   getAllDownloads,
   getAllUploads,
   getDownloadsID,
+  getUserSize,
+  setUserUsed,
   uploadImg,
 } from "../../utils/firebase/functions";
 import LottieView from "lottie-react-native";
@@ -40,6 +42,7 @@ import {
   where,
 } from "firebase/firestore";
 import { firedb } from "../../utils/firebase/config";
+import { get_filesize } from "../../utils/getFileSize";
 
 const mapStateToProps = (state) => {
   return {
@@ -57,17 +60,6 @@ const mapDispatchToProps = (dispatch) => ({
 const unsub = () => {};
 
 class TrackComponent extends React.Component {
-  componentDidMount() {
-    // this.fetchCopiedText();
-    // setTimeout(() => {
-    //   this._getFileType(this.state.formFileName);
-    // }, 1000);
-    // console.log("From signup");
-    // console.log(this.props.user);
-    // setInterval(() => {
-    // this._getDownloads();
-    // }, 2000);
-  }
   state = {
     allDnlds: [],
     isLoading: false,
@@ -89,6 +81,7 @@ class TrackComponent extends React.Component {
     URLError: false,
     runningSync: false,
     uploadingImage: false,
+    used: this.props.user.data[0].used,
   };
   fetchCopiedText = async () => {
     const text = await Clipboard.getStringAsync();
@@ -101,83 +94,90 @@ class TrackComponent extends React.Component {
     this.setState({ isLoading: true });
     if (!this.state.runningSync) {
       this.setState({ runningSync: true });
-      let interval = setInterval(async () => {
-        console.log("---------------- Getting downloads ----------------");
-        let completed = [];
-        let currentStatus = "";
-        let currentUpload = [];
-        // this.setState({ isLoading: true });
-        const allDownloads = await getAllDownloads(this.props.user.data[0].id);
-        const uploadData = await getAllUploads(this.props.user.data[0].id);
-        let pendingDownloads = allDownloads.filter(
-          (p) => p.status == "Pending"
-        );
-        // console.log(uploadData);
-        let dnlding = allDownloads.filter((v) => v.status === "Downloading");
-        console.log("PendingDonwloads: " + this.state.pendingDownloads.length);
-        console.log("Downloading: " + this.state.downloading.length);
-        if (
-          // this.state.pendingDownloads.length == 0 &&
-          // this.state.downloading.length == 0 &&
-          pendingDownloads.length == 0 &&
-          dnlding.length == 0
-        ) {
-          console.log("Nothing found");
-          this.setState({
-            runningSync: false,
-            isLoading: false,
-            downloading: [],
-            pendingDownloads: [],
-          });
-          clearInterval(interval);
-        } else {
-          if (dnlding.length > 0) {
-            currentUpload = uploadData.filter(
-              (v) => v.downloadId === dnlding[0].id
-            );
-            currentStatus =
-              currentUpload.length == 0 ? "pending" : currentUpload[0].status;
+      let interval = setInterval(
+        async () => {
+          console.log("---------------- Getting downloads ----------------");
+          let completed = [];
+          let currentStatus = "";
+          let currentUpload = [];
+          // this.setState({ isLoading: true });
+          const allDownloads = await getAllDownloads(
+            this.props.user.data[0].id
+          );
+          const uploadData = await getAllUploads(this.props.user.data[0].id);
+          let pendingDownloads = allDownloads.filter(
+            (p) => p.status == "Pending"
+          );
+          // console.log(uploadData);
+          let dnlding = allDownloads.filter((v) => v.status === "Downloading");
+          console.log(
+            "PendingDonwloads: " + this.state.pendingDownloads.length
+          );
+          console.log("Downloading: " + this.state.downloading.length);
+          if (
+            // this.state.pendingDownloads.length == 0 &&
+            // this.state.downloading.length == 0 &&
+            pendingDownloads.length == 0 &&
+            dnlding.length == 0
+          ) {
+            console.log("Nothing found");
+            this.setState({
+              runningSync: false,
+              isLoading: false,
+              downloading: [],
+              pendingDownloads: [],
+            });
+            clearInterval(interval);
           } else {
-            this.setState({ downloading: [] });
-          }
-
-          allDownloads.forEach((v) => {
-            if (v.status == "Completed") {
-              let correspondingUpload = uploadData.filter(
-                (vl) => vl.downloadId == v.id
+            if (dnlding.length > 0) {
+              currentUpload = uploadData.filter(
+                (v) => v.downloadId === dnlding[0].id
               );
-              // console.log("currespo:" + uploadData.length);
-              correspondingUpload.forEach((val) => {
-                if (val.status == "Completed") {
-                  let completedDownlads = allDownloads.filter(
-                    (vls) => vls.id == val.downloadId
-                  );
-                  completed.push(completedDownlads);
-                } else {
-                  currentStatus = val.status;
-                  currentUpload = [val];
-                  dnlding = allDownloads.filter(
-                    (dnld) => dnld.id == val.downloadId
-                  );
-                }
-              });
+              currentStatus =
+                currentUpload.length == 0 ? "pending" : currentUpload[0].status;
+            } else {
+              this.setState({ downloading: [] });
             }
-          });
-          console.log("Downloading: " + dnlding.length);
-          console.log("CurrentUpload: " + currentUpload.length);
-          console.log("CurrentStatis: " + currentStatus);
-          console.log("Completed: " + completed.length);
-          console.log("Pending: " + pendingDownloads.length);
-          this.setState({
-            isLoading: false,
-            allDnlds: allDownloads,
-            downloading: dnlding,
-            uploadStatus: currentStatus,
-            completed: completed,
-            pendingDownloads: pendingDownloads,
-          });
-        }
-      }, 6000);
+
+            allDownloads.forEach((v) => {
+              if (v.status == "Completed") {
+                let correspondingUpload = uploadData.filter(
+                  (vl) => vl.downloadId == v.id
+                );
+                // console.log("currespo:" + uploadData.length);
+                correspondingUpload.forEach((val) => {
+                  if (val.status == "Completed") {
+                    let completedDownlads = allDownloads.filter(
+                      (vls) => vls.id == val.downloadId
+                    );
+                    completed.push(completedDownlads);
+                  } else {
+                    currentStatus = val.status;
+                    currentUpload = [val];
+                    dnlding = allDownloads.filter(
+                      (dnld) => dnld.id == val.downloadId
+                    );
+                  }
+                });
+              }
+            });
+            console.log("Downloading: " + dnlding.length);
+            console.log("CurrentUpload: " + currentUpload.length);
+            console.log("CurrentStatis: " + currentStatus);
+            console.log("Completed: " + completed.length);
+            console.log("Pending: " + pendingDownloads.length);
+            this.setState({
+              isLoading: false,
+              allDnlds: allDownloads,
+              downloading: dnlding,
+              uploadStatus: currentStatus,
+              completed: completed,
+              pendingDownloads: pendingDownloads,
+            });
+          }
+        },
+        this.props.user.data[0].type == "premium" ? 2000 : 6000
+      );
     }
   };
   getPercentage = (percentage) => {
@@ -204,96 +204,210 @@ class TrackComponent extends React.Component {
     } else {
       let imgURI = await uploadImageFromDevice();
       if (imgURI != null) {
-        // console.log(imgURI);
-        // let ext = imgURI.split(".").pop();
-        // console.log(ext);
-        // const file = await FileSystem.readAsStringAsync(imgURI, {
-        //   encoding: FileSystem.EncodingType.Base64,
-        // });
-        // console.log(file);
-        // this.setState({localImgURI: file})
-        // console.log("done");
-        // console.log(file);
-        // // console.log(blob);
-        // console.log(imgURI);
         this.setState({ localImgURI: imgURI });
       }
     }
     console.log(hasPermission);
   };
+  getUsed = async () => {
+    const used = await getUserSize(this.props.user.data[0].gmail);
+    this.setState({ used: used });
+    // alert(used);
+  };
+  sendEmail = () => {
+    Linking.openURL(
+      "mailto:developer.kevinpaul@gmail.com?subject=Limit%20Increase%20Request&body=I would like to have an increase in limit.\n\nRegistered Email Address: " +
+        this.props.user.data[0].gmail +
+        " \n \n Thank you, \n" +
+        this.props.user.data[0].name
+    );
+  };
   _uploadImage = async () => {
     this.setState({ uploadingImage: true, onPressIn: true });
-    let fileNameError = false;
-    let URLError = false;
-    if (this.state.formFileName == "") {
-      fileNameError = true;
-      this.setState({ fileNameError: fileNameError });
-    }
-    if (this.state.formURL == "") {
-      URLError = true;
-      this.setState({ URLError: URLError });
-    }
-    if (fileNameError || URLError) {
-      console.log("error");
-      this.setState({ uploadingImage: false, onPressIn: false });
+    if (this.props.user.data[0].type == "premium") {
+      get_filesize(this.state.formURL, async (size) => {
+        const availilable = 5000 - this.state.used;
+        const current = parseInt(size) / 1024 / 1000;
+        // console.log(size);
+        console.log(availilable + " > " + current);
+        if (isNaN(current)) {
+          alert("This file can not be downloaded!");
+          this.setState({ onPressIn: false, uploadingImage: false });
+        } else {
+          let fileNameError = false;
+          let URLError = false;
+          if (this.state.formFileName == "") {
+            fileNameError = true;
+            this.setState({ fileNameError: fileNameError });
+          }
+          if (this.state.formURL == "") {
+            URLError = true;
+            this.setState({ URLError: URLError });
+          }
+          if (fileNameError || URLError) {
+            console.log("error");
+            this.setState({ uploadingImage: false, onPressIn: false });
+          } else {
+            let downloadId =
+              this.props.user.data[0].id +
+              "_" +
+              new Date().getTime().toString();
+            let imgURL = "nothing";
+            if (this.state.localImgURI == "") {
+              imgURL = "nothing";
+            } else {
+              const downloadURL = await uploadImg(
+                this.props.user.data[0].id +
+                  "/" +
+                  downloadId +
+                  "_" +
+                  this.state.formFileName.replace(" ", "_"),
+                this.state.localImgURI
+              );
+              imgURL = downloadURL;
+            }
+            let data = {
+              url: this.state.formURL,
+              filename: this.state.formFileName.replace(" ", "_"),
+              id: downloadId,
+              folderName: this.state.formFolderName,
+              token: this.props.user.data[0].refreshToken,
+              img: imgURL,
+              userId: this.props.user.data[0].id,
+            };
+            await setUserUsed(
+              this.props.user.data[0].gmail,
+              Math.round(current) + this.state.used
+            );
+            this.setState({ used: Math.round(current) + this.state.used });
+            fetch(baseURL.api_uri + "/cloudSave", {
+              method: "POST",
+              headers: {
+                Accept: "*/*",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data),
+            })
+              .then((res) => {
+                console.log("Download added");
+                this.setState({
+                  uploadingImage: false,
+                  onPressIn: false,
+                  newModalVisible: false,
+                });
+                this._getDownloads();
+              })
+              .catch((e) => {
+                console.error(e);
+              });
+          }
+        }
+      });
     } else {
-      let downloadId =
-        this.props.user.data[0].id + "_" + new Date().getTime().toString();
-      let imgURL = "nothing";
-      if (this.state.localImgURI == "") {
-        imgURL = "nothing";
-      } else {
-        const downloadURL = await uploadImg(
-          this.props.user.data[0].id +
-            "/" +
-            downloadId +
-            "_" +
-            this.state.formFileName.replace(" ", "_"),
-          this.state.localImgURI
-        );
-        imgURL = downloadURL;
-      }
-      let data = {
-        url: this.state.formURL,
-        filename: this.state.formFileName.replace(" ", "_"),
-        id: downloadId,
-        folderName: this.state.formFolderName,
-        token: this.props.user.data[0].refreshToken,
-        img: imgURL,
-        userId: this.props.user.data[0].id,
-      };
-      fetch(baseURL.api_uri + "/cloudSave", {
-        method: "POST",
-        headers: {
-          Accept: "*/*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-        .then((res) => {
-          console.log("Download added");
-          this.setState({
-            uploadingImage: false,
-            onPressIn: false,
-            newModalVisible: false,
-          });
-          this._getDownloads();
-          // if (this.state.downloading.length > 0) {
-          //   let temp = this.state.pendingDownloads;
-          //   temp.push(data);
-          //   this.setState({ pendingDownloads: temp });
-          // } else {
-          //   this._listenChanges(data);
-          // }
-        })
-        .catch((e) => {
-          console.error(e);
-        });
+      get_filesize(this.state.formURL, async (size) => {
+        const availilable = 5000 - this.state.used;
+        const current = parseInt(size) / 1024 / 1000;
+        // console.log(size);
+        console.log(availilable + " > " + current);
+        if (isNaN(current)) {
+          alert("This file can not be downloaded!");
+          this.setState({ onPressIn: false, uploadingImage: false });
+        } else {
+          if (availilable < current) {
+            this.setState({ onPressIn: false, uploadingImage: false });
+            Alert.alert("Limit exceeded!", "Contact us for limit increase", [
+              {
+                text: "cancel",
+                onPress: () => {
+                  console.log("Cancel Pressed");
+                  this.setState({ onPressIn: false, uploadingImage: false });
+                },
+                style: "cancel",
+              },
+              {
+                text: "Contact Us",
+                onPress: () => {
+                  this.sendEmail();
+                },
+              },
+            ]);
+          } else {
+            let fileNameError = false;
+            let URLError = false;
+            if (this.state.formFileName == "") {
+              fileNameError = true;
+              this.setState({ fileNameError: fileNameError });
+            }
+            if (this.state.formURL == "") {
+              URLError = true;
+              this.setState({ URLError: URLError });
+            }
+            if (fileNameError || URLError) {
+              console.log("error");
+              this.setState({ uploadingImage: false, onPressIn: false });
+            } else {
+              let downloadId =
+                this.props.user.data[0].id +
+                "_" +
+                new Date().getTime().toString();
+              let imgURL = "nothing";
+              if (this.state.localImgURI == "") {
+                imgURL = "nothing";
+              } else {
+                const downloadURL = await uploadImg(
+                  this.props.user.data[0].id +
+                    "/" +
+                    downloadId +
+                    "_" +
+                    this.state.formFileName.replace(" ", "_"),
+                  this.state.localImgURI
+                );
+                imgURL = downloadURL;
+              }
+              let data = {
+                url: this.state.formURL,
+                filename: this.state.formFileName.replace(" ", "_"),
+                id: downloadId,
+                folderName: this.state.formFolderName,
+                token: this.props.user.data[0].refreshToken,
+                img: imgURL,
+                userId: this.props.user.data[0].id,
+              };
+              await setUserUsed(
+                this.props.user.data[0].gmail,
+                Math.round(current) + this.state.used
+              );
+              this.setState({ used: Math.round(current) + this.state.used });
+              fetch(baseURL.api_uri + "/cloudSave", {
+                method: "POST",
+                headers: {
+                  Accept: "*/*",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+              })
+                .then((res) => {
+                  console.log("Download added");
+                  this.setState({
+                    uploadingImage: false,
+                    onPressIn: false,
+                    newModalVisible: false,
+                  });
+                  this._getDownloads();
+                })
+                .catch((e) => {
+                  console.error(e);
+                });
+            }
+          }
+        }
+      });
     }
   };
 
   componentDidMount() {
     this._getDownloads();
+    this.getUsed();
   }
 
   _getPermissionAlert = () => {
@@ -416,7 +530,7 @@ class TrackComponent extends React.Component {
             // height: 70,
             justifyContent: "center",
             position: "absolute",
-            top: 20,
+            top: 50,
             left: 20,
             zIndex: 100,
           }}
@@ -740,6 +854,88 @@ class TrackComponent extends React.Component {
   render() {
     return (
       <View style={{ marginTop: 10, height: windowheight - 130 }}>
+        {this.props.user.data[0].type == "premium" ? (
+          <View>
+            <Text
+              style={{
+                alignSelf: "center",
+                fontSize: 14,
+                color: theme.secondryText,
+              }}
+            >
+              Unlimited Downloads
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View
+              style={{
+                width: windowwidth - 40,
+                marginLeft: 20,
+                // height: 20,
+                // backgroundColor: "red",
+                borderRadius: 3,
+                borderColor: theme.mainDark,
+                borderWidth: 0.3,
+              }}
+            >
+              <Text
+                style={{
+                  padding: 5,
+                  alignSelf: "center",
+                  fontSize: 14,
+                  color: theme.mainDark,
+                  zIndex: 100,
+                }}
+              >
+                {(this.state.used / 1000).toString() + "GB" + " / 5GB used"}
+              </Text>
+              <View
+                style={{
+                  width: ((this.state.used * 100) / 5000).toString() + "%",
+                  height: "100%",
+                  backgroundColor: theme.mainLight,
+                  position: "absolute",
+                  zIndex: 0,
+                }}
+              />
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                alignSelf: "flex-end",
+                marginRight: 20,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.secondryText,
+                  fontSize: 12,
+
+                  marginTop: 4,
+                }}
+              >
+                refreshes daily
+              </Text>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => this.sendEmail()}
+                style={{
+                  marginLeft: 5,
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{ color: theme.mainDark, fontSize: 8, marginTop: 4 }}
+                >
+                  increase limit?
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
         <this._NewTaskIcon />
         <this._newtModal />
         <View

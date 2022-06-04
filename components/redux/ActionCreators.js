@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { firedb } from "../../utils/firebase/config";
+import { setUserId } from "../../utils/firebase/functions";
 import * as ActionTypes from "./ActionTypes";
 
 let interval;
@@ -29,8 +30,14 @@ export const fetchUser =
       const q = query(userRef, where("gmail", "==", email));
       const querySnapshot = await getDocs(q);
 
-      querySnapshot.forEach((doc) => {
-        retData.push(doc.data());
+      querySnapshot.forEach(async (doc) => {
+        let userData = doc.data();
+        if (userData.used == undefined) {
+          await setUserId(userData.gmail);
+          userData.used = 0;
+          userData.updated = new Date();
+        }
+        retData.push(userData);
         access = doc.data().access;
         userDoc = doc.data();
       });

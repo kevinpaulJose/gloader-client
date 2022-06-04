@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 // import * as google from "googleapis";
+import LottieView from "lottie-react-native";
 
 import { connect } from "react-redux";
 import { fetchUser, removeUser } from "../redux/ActionCreators";
@@ -36,7 +37,21 @@ class ListingComponent extends React.Component {
   render() {
     return (
       <View>
-        <Text>List</Text>
+        <LottieView
+          style={{
+            width: windowwidth - 40,
+            height: windowwidth - 40,
+            alignSelf: "center",
+            // marginTop: 100,
+            // marginLeft: -5,
+            marginTop: 20,
+          }}
+          source={require("../../assets/lottie/under-construction.json")}
+          autoPlay
+          loop={true}
+          // backgroundColor={"red"}
+          resizeMode="contain"
+        />
       </View>
     );
   }

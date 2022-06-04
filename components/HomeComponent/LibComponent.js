@@ -4,6 +4,7 @@ import {
   Alert,
   Dimensions,
   Linking,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -120,6 +121,7 @@ class LibComponent extends React.Component {
           isLoading: false,
           folders: uniqueFolders,
         });
+        // console.log(uniqueFolders);
       });
   };
   getGridImage = (size) => {
@@ -239,12 +241,20 @@ class LibComponent extends React.Component {
   render() {
     return (
       <ScrollView
+        refreshControl={
+          <RefreshControl
+            onRefresh={() => {
+              this.getCompletedUploads();
+            }}
+            refreshing={this.state.isLoading}
+          />
+        }
         style={{
           height: windowheight - 130 + 50,
           backgroundColor:
-            !this.state.isLoading &&
-            (this.state.files.length != 0 || this.state.folders.length != 0)
-              ? theme.darkBG
+            // !this.state.isLoading &&
+            this.state.files.length != 0 || this.state.folders.length != 0
+              ? theme.blank
               : theme.blank,
           width: windowwidth,
           // marginTop: -100,
@@ -277,7 +287,7 @@ class LibComponent extends React.Component {
             <Icon
               name="return-down-back"
               type="ionicon"
-              color={theme.blank}
+              color={theme.mainDark}
               size={25}
               containerStyle={{ alignSelf: "flex-end", marginRight: 5 }}
             />
@@ -310,9 +320,20 @@ class LibComponent extends React.Component {
                 alignItems: "flex-end",
               }}
             >
+              <Text
+                style={{
+                  position: "absolute",
+                  alignSelf: "center",
+                  fontSize: 12,
+                  color: theme.secondryText,
+                  marginTop: 5,
+                }}
+              >
+                swipe down to refresh
+              </Text>
               <FlatGrid
                 style={{
-                  marginRight: 30,
+                  marginRight: 0,
                 }}
                 itemDimension={25}
                 data={[
@@ -327,8 +348,8 @@ class LibComponent extends React.Component {
                     style={{
                       backgroundColor:
                         this.state.selectedDimension.name == item.name
-                          ? theme.darkestBG
-                          : theme.darkBG,
+                          ? theme.mainLight
+                          : theme.blank,
                       alignItems: "center",
                       borderRadius: 10,
                     }}
@@ -348,7 +369,7 @@ class LibComponent extends React.Component {
               this.state.currentView != "folder" && (
                 <View
                   style={{
-                    backgroundColor: theme.darkestBG,
+                    backgroundColor: theme.veryLightBG,
                   }}
                 >
                   <TextInput
@@ -357,11 +378,11 @@ class LibComponent extends React.Component {
                       padding: 8,
                       textAlign: "center",
                       fontSize: 14,
-                      color: theme.blank,
+                      color: theme.mainDark,
                     }}
                     onChangeText={(text) => this.searchData(text)}
                     placeholder="search for files"
-                    placeholderTextColor={theme.textforDarkBG}
+                    placeholderTextColor={theme.secondryText}
                   />
                 </View>
               )}
@@ -395,7 +416,7 @@ class LibComponent extends React.Component {
                       style={{
                         marginTop: 3,
                         fontSize: 12,
-                        color: theme.blank,
+                        color: theme.mainDark,
                       }}
                     >
                       {item.folderName}
@@ -425,7 +446,7 @@ class LibComponent extends React.Component {
                       height: this.state.selectedDimension.size,
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: theme.darkestBG,
+                      backgroundColor: theme.blank,
                       borderRadius: 5,
                     }}
                   >
