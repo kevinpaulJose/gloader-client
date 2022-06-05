@@ -260,6 +260,17 @@ class LibComponent extends React.Component {
           // marginTop: -100,
         }}
       >
+        <Text
+          style={{
+            position: "absolute",
+            alignSelf: "center",
+            fontSize: 12,
+            color: theme.secondryText,
+            marginTop: 5,
+          }}
+        >
+          swipe down to refresh
+        </Text>
         {!this.state.isLoading &&
           this.state.files.length == 0 &&
           this.state.folders.length == 0 && (
@@ -320,17 +331,6 @@ class LibComponent extends React.Component {
                 alignItems: "flex-end",
               }}
             >
-              <Text
-                style={{
-                  position: "absolute",
-                  alignSelf: "center",
-                  fontSize: 12,
-                  color: theme.secondryText,
-                  marginTop: 5,
-                }}
-              >
-                swipe down to refresh
-              </Text>
               <FlatGrid
                 style={{
                   marginRight: 0,
