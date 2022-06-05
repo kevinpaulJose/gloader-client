@@ -28,7 +28,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getUploadsWithID } from "../utils/firebase/functions";
+import { getIP, getUploadsWithID } from "../utils/firebase/functions";
 import { theme } from "./theme";
 import { baseURL } from "../utils/config";
 import { Icon } from "@rneui/base";
@@ -94,7 +94,8 @@ class Navigator extends React.Component {
     let downloadId =
       this.props.user.data[0].id + "_test" + new Date().getTime().toString();
     this.setState({ conStatus: "connecting" });
-    fetch(baseURL.api_uri + "/cloudSave", {
+    const api_url = await getIP(this.props.user.data[0].type);
+    fetch(`http://${api_url}` + "/cloudSave", {
       method: "POST",
       headers: {
         Accept: "*/*",

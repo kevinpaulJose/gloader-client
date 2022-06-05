@@ -88,7 +88,8 @@ class Home extends React.Component {
     let downloadId =
       this.props.user.data[0].id + "_test" + new Date().getTime().toString();
     this.setState({ conStatus: "checking..." });
-    fetch(baseURL.api_uri + "/cloudSave", {
+    const api_url = await getIP(this.props.user.data[0].type);
+    fetch(`http://${api_url}` + "/cloudSave", {
       method: "POST",
       headers: {
         Accept: "*/*",

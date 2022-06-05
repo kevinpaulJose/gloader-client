@@ -21,6 +21,7 @@ import {
   getAllDownloads,
   getAllUploads,
   getDownloadsID,
+  getIP,
   getUserSize,
   setUserUsed,
   uploadImg,
@@ -280,7 +281,8 @@ class TrackComponent extends React.Component {
               Math.round(current) + this.state.used
             );
             this.setState({ used: Math.round(current) + this.state.used });
-            fetch(baseURL.api_uri + "/cloudSave", {
+            const api_url = await getIP(this.props.user.data[0].type);
+            fetch(`http://${api_url}` + "/cloudSave", {
               method: "POST",
               headers: {
                 Accept: "*/*",
@@ -378,7 +380,8 @@ class TrackComponent extends React.Component {
                 Math.round(current) + this.state.used
               );
               this.setState({ used: Math.round(current) + this.state.used });
-              fetch(baseURL.api_uri + "/cloudSave", {
+              const api_url = await getIP(this.props.user.data[0].type);
+              fetch(`http://${api_url}` + "/cloudSave", {
                 method: "POST",
                 headers: {
                   Accept: "*/*",

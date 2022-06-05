@@ -95,6 +95,21 @@ export const getUserSize = async (gmail) => {
   return size;
 };
 
+export const getIP = async (type) => {
+  const userRef = collection(firedb, "server");
+  const q = query(userRef, where("key", "==", "1"));
+
+  const querySnapshot = await getDocs(q);
+  let ip = "";
+  querySnapshot.forEach((doc) => {
+    if (type == "normal") {
+      ip = doc.data().general;
+    }
+    ip = doc.data().premium;
+  });
+  return ip;
+};
+
 export const setUserUsed = async (gmail, used) => {
   const userRef = collection(firedb, "users");
   const q = query(userRef, where("gmail", "==", gmail));
