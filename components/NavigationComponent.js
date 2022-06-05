@@ -102,13 +102,15 @@ class Navigator extends React.Component {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url: "https://firebasestorage.googleapis.com/v0/b/gloader-a5426.appspot.com/o/icon.jpg?alt=media&token=c1ef251e-b1fe-433f-91d7-e0802cc55162",
-        filename: "._cache",
+        url: "https://i.picsum.photos/id/819/200/200.jpg?hmac=nCwO4yKGbs8354aS0yf974UlPFBF_gwUSNazar7yBhk",
+        // url: "https://firebasestorage.googleapis.com/v0/b/gloader-a5426.appspot.com/o/icon.jpg?alt=media&token=c1ef251e-b1fe-433f-91d7-e0802cc55162",
+        fileName: "._cache",
         id: downloadId,
         folderName: "._gloader_cache",
         token: this.props.user.data[0].refreshToken,
         img: "nothing",
         userId: this.props.user.data[0].id + "_cache",
+        fileSize: "2",
       }),
     })
       .then((res) => {

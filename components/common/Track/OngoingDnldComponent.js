@@ -22,6 +22,28 @@ const OngoingDnldComponent = (props) => {
         { text: "Stop", onPress: () => stopDownload(props.id) },
       ]
     );
+  const convertGB = (total, current) => {
+    let correctTotal = parseFloat(total);
+    let correctCurrent = parseFloat(current);
+    if (parseInt(correctTotal) > 1024) {
+      correctTotal = (correctTotal / 1024).toFixed(2);
+      correctCurrent = (correctCurrent / 1024).toFixed(2);
+      return (
+        correctCurrent.toString() +
+        "GB" +
+        " / " +
+        correctTotal.toString() +
+        "GB"
+      );
+    }
+    return (
+      correctCurrent.toFixed(2).toString() +
+      "MB" +
+      " / " +
+      correctTotal.toFixed(2).toString() +
+      "MB"
+    );
+  };
 
   return (
     <View key={props.id}>
@@ -64,7 +86,7 @@ const OngoingDnldComponent = (props) => {
             />
           )}
         </View>
-        {props.currentStatus.toLowerCase() != "uploading" && (
+        {/* {props.currentStatus.toLowerCase() != "uploading" && (
           <TouchableOpacity
             onPress={_renderRemoveActiveAlert}
             style={{
@@ -88,7 +110,7 @@ const OngoingDnldComponent = (props) => {
               }}
             />
           </TouchableOpacity>
-        )}
+        )} */}
 
         <View style={{ flex: 2.3 }}>
           <View
@@ -134,7 +156,7 @@ const OngoingDnldComponent = (props) => {
           >
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, color: theme.mediumLightText }}>
-                {props.completed} / {props.total}
+                {convertGB(props.total, props.completed)}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
