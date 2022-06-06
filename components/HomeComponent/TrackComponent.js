@@ -84,6 +84,7 @@ class TrackComponent extends React.Component {
     runningSync: false,
     uploadingImage: false,
     used: this.props.user.data[0].used,
+    errorDownloads: [],
   };
   fetchCopiedText = async () => {
     const text = await Clipboard.getStringAsync();
@@ -102,10 +103,12 @@ class TrackComponent extends React.Component {
           let completed = [];
           let currentStatus = "";
           let currentUpload = [];
+          let errorDownloads = [];
           // this.setState({ isLoading: true });
           const allDownloads = await getAllDownloads(
             this.props.user.data[0].id
           );
+          errorDownloads = allDownloads.filter((e) => e.status == "Error");
           const uploadData = await getAllUploads(this.props.user.data[0].id);
           let pendingDownloads = allDownloads.filter(
             (p) => p.status == "Pending"
@@ -175,6 +178,7 @@ class TrackComponent extends React.Component {
               uploadStatus: currentStatus,
               completed: completed,
               pendingDownloads: pendingDownloads,
+              errorDownloads: errorDownloads,
             });
           }
         },
@@ -225,219 +229,71 @@ class TrackComponent extends React.Component {
     );
   };
   _uploadImage = async () => {
-    this.setState({ uploadingImage: true, onPressIn: true });
-    if (this.props.user.data[0].type == "premium") {
-      get_filesize(this.state.formURL, async (size) => {
-        fetch(
-          `https://oauth2.googleapis.com/token?client_secret=${baseURL.client_secret}&grant_type=refresh_token&refresh_token=${this.props.user.data[0].refreshToken}&client_id=${baseURL.client_id}`,
+    if (this.state.downloading.length >= 5) {
+      Alert.alert(
+        "Active downloads limit reached",
+        "Can't download more than 5 files at a time. ",
+        [
           {
-            method: "POST",
-            headers: {
-              Accept: "*/*",
-            },
-          }
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            // console.log("got access");
-            const accessToken = data.access_token;
-            console.log("Got access - track");
-            fetch(
-              `https://www.googleapis.com/drive/v3/about/?fields=storageQuota&key=${baseURL.api_key}&access_token=${accessToken}`,
-              {
-                method: "GET",
-                headers: {
-                  Accept: "*/*",
-                },
-              }
-            )
-              .then((response) => response.json())
-              .then(async (resData) => {
-                // console.log(data);
-                let availableInDrive =
-                  parseInt(resData.storageQuota.limit) -
-                  parseInt(resData.storageQuota.usage);
-                if (availableInDrive >= size) {
-                  const availilable = 5000 - this.state.used;
-                  const current = parseInt(size) / 1024 / 1000;
-                  console.log(availilable + " > " + current);
-                  if (isNaN(current)) {
-                    alert("This file can not be downloaded!");
-                    this.setState({ onPressIn: false, uploadingImage: false });
-                  } else {
-                    let fileNameError = false;
-                    let URLError = false;
-                    if (this.state.formFileName == "") {
-                      fileNameError = true;
-                      this.setState({ fileNameError: fileNameError });
-                    }
-                    if (this.state.formURL == "") {
-                      URLError = true;
-                      this.setState({ URLError: URLError });
-                    }
-                    if (fileNameError || URLError) {
-                      console.log("error");
-                      this.setState({
-                        uploadingImage: false,
-                        onPressIn: false,
-                      });
-                    } else {
-                      let downloadId =
-                        this.props.user.data[0].id +
-                        "_" +
-                        new Date().getTime().toString();
-                      let imgURL = "nothing";
-                      if (this.state.localImgURI == "") {
-                        imgURL = "nothing";
-                      } else {
-                        const downloadURL = await uploadImg(
-                          this.props.user.data[0].id +
-                            "/" +
-                            downloadId +
-                            "_" +
-                            this.state.formFileName.replace(" ", "_"),
-                          this.state.localImgURI
-                        );
-                        imgURL = downloadURL;
-                      }
-                      let data = {
-                        url: this.state.formURL,
-                        fileName: this.state.formFileName.replace(" ", "_"),
-                        id: downloadId,
-                        folderName: this.state.formFolderName,
-                        token: this.props.user.data[0].refreshToken,
-                        img: imgURL,
-                        userId: this.props.user.data[0].id,
-                        fileSize: (size / 1000 / 1000).toString(),
-                      };
-                      await setUserUsed(
-                        this.props.user.data[0].gmail,
-                        Math.round(current) + this.state.used
-                      );
-                      this.setState({
-                        used: Math.round(current) + this.state.used,
-                      });
-                      const api_url = await getIP(this.props.user.data[0].type);
-                      fetch(`http://${api_url}` + "/cloudSave", {
-                        method: "POST",
-                        headers: {
-                          Accept: "*/*",
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(data),
-                      })
-                        .then((res) => {
-                          console.log("Download added");
-                          this.setState({
-                            uploadingImage: false,
-                            onPressIn: false,
-                            newModalVisible: false,
-                          });
-                          this._getDownloads();
-                        })
-                        .catch((e) => {
-                          console.error(e);
-                        });
-                    }
-                  }
-                } else {
-                  this.setState({ onPressIn: false, uploadingImage: false });
-                  Alert.alert(
-                    "Insufficient space!",
-                    "Upgrade your drive storage to download",
-                    [
-                      {
-                        text: "cancel",
-                        onPress: () => {
-                          console.log("Cancel Pressed");
-                          this.setState({
-                            onPressIn: false,
-                            uploadingImage: false,
-                          });
-                        },
-                        style: "cancel",
-                      },
-                      {
-                        text: "Upgrade",
-                        onPress: () => {
-                          // this.sendEmail();
-                          Linking.openURL("https://one.google.com/about/plans");
-                        },
-                      },
-                    ]
-                  );
-                }
+            text: "Try again later",
+            onPress: () => {
+              console.log("Cancel Pressed");
+              this.setState({
+                onPressIn: false,
+                uploadingImage: false,
               });
-          });
-      });
-    } else {
-      get_filesize(this.state.formURL, async (size) => {
-        fetch(
-          `https://oauth2.googleapis.com/token?client_secret=${baseURL.client_secret}&grant_type=refresh_token&refresh_token=${this.props.user.data[0].refreshToken}&client_id=${baseURL.client_id}`,
-          {
-            method: "POST",
-            headers: {
-              Accept: "*/*",
             },
-          }
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            // console.log("got access");
-            const accessToken = data.access_token;
-            console.log("Got access - track");
-            fetch(
-              `https://www.googleapis.com/drive/v3/about/?fields=storageQuota&key=${baseURL.api_key}&access_token=${accessToken}`,
-              {
-                method: "GET",
-                headers: {
-                  Accept: "*/*",
-                },
-              }
-            )
-              .then((response) => response.json())
-              .then(async (resData) => {
-                // console.log(data);
-                let availableInDrive =
-                  parseInt(resData.storageQuota.limit) -
-                  parseInt(resData.storageQuota.usage);
-                if (availableInDrive >= size) {
-                  const availilable = 5000 - this.state.used;
-                  const current = parseInt(size) / 1024 / 1000;
-                  // console.log(size);
-                  console.log(availilable + " > " + current);
-                  if (isNaN(current)) {
-                    alert("This file can not be downloaded!");
-                    this.setState({ onPressIn: false, uploadingImage: false });
-                  } else {
-                    if (availilable < current) {
+            style: "cancel",
+          },
+        ]
+      );
+    } else {
+      this.setState({ uploadingImage: true, onPressIn: true });
+      if (this.props.user.data[0].type == "premium") {
+        get_filesize(this.state.formURL, async (size) => {
+          fetch(
+            `https://oauth2.googleapis.com/token?client_secret=${baseURL.client_secret}&grant_type=refresh_token&refresh_token=${this.props.user.data[0].refreshToken}&client_id=${baseURL.client_id}`,
+            {
+              method: "POST",
+              headers: {
+                Accept: "*/*",
+              },
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              // console.log("got access");
+              const accessToken = data.access_token;
+              console.log("Got access - track");
+              fetch(
+                `https://www.googleapis.com/drive/v3/about/?fields=storageQuota&key=${baseURL.api_key}&access_token=${accessToken}`,
+                {
+                  method: "GET",
+                  headers: {
+                    Accept: "*/*",
+                  },
+                }
+              )
+                .then((response) => response.json())
+                .then(async (resData) => {
+                  let availableInDrive =
+                    parseInt(resData.storageQuota.limit) -
+                    parseInt(resData.storageQuota.usage);
+                  // console.log(data);
+                  if (this.props.user.data[0].gmail.includes("edu.in")) {
+                    availableInDrive = 10000000000000;
+                  }
+
+                  if (availableInDrive >= size) {
+                    const availilable = 5000 - this.state.used;
+                    const current = parseInt(size) / 1024 / 1000;
+                    console.log(availilable + " > " + current);
+                    if (isNaN(current)) {
+                      alert("This file can not be downloaded!");
                       this.setState({
                         onPressIn: false,
                         uploadingImage: false,
                       });
-                      Alert.alert(
-                        "Limit exceeded!",
-                        "Contact us for limit increase",
-                        [
-                          {
-                            text: "cancel",
-                            onPress: () => {
-                              console.log("Cancel Pressed");
-                              this.setState({
-                                onPressIn: false,
-                                uploadingImage: false,
-                              });
-                            },
-                            style: "cancel",
-                          },
-                          {
-                            text: "Contact Us",
-                            onPress: () => {
-                              this.sendEmail();
-                            },
-                          },
-                        ]
-                      );
                     } else {
                       let fileNameError = false;
                       let URLError = false;
@@ -516,37 +372,224 @@ class TrackComponent extends React.Component {
                           });
                       }
                     }
+                  } else {
+                    this.setState({ onPressIn: false, uploadingImage: false });
+                    Alert.alert(
+                      "Insufficient space!",
+                      "Upgrade your drive storage to download",
+                      [
+                        {
+                          text: "cancel",
+                          onPress: () => {
+                            console.log("Cancel Pressed");
+                            this.setState({
+                              onPressIn: false,
+                              uploadingImage: false,
+                            });
+                          },
+                          style: "cancel",
+                        },
+                        {
+                          text: "Upgrade",
+                          onPress: () => {
+                            // this.sendEmail();
+                            Linking.openURL(
+                              "https://one.google.com/about/plans"
+                            );
+                          },
+                        },
+                      ]
+                    );
                   }
-                } else {
-                  this.setState({ onPressIn: false, uploadingImage: false });
-                  Alert.alert(
-                    "Insufficient space!",
-                    "Upgrade your drive storage to download",
-                    [
-                      {
-                        text: "cancel",
-                        onPress: () => {
-                          console.log("Cancel Pressed");
-                          this.setState({
-                            onPressIn: false,
-                            uploadingImage: false,
-                          });
-                        },
-                        style: "cancel",
-                      },
-                      {
-                        text: "Upgrade",
-                        onPress: () => {
-                          // this.sendEmail();
-                          Linking.openURL("https://one.google.com/about/plans");
-                        },
-                      },
-                    ]
-                  );
+                });
+            });
+        });
+      } else {
+        get_filesize(this.state.formURL, async (size) => {
+          fetch(
+            `https://oauth2.googleapis.com/token?client_secret=${baseURL.client_secret}&grant_type=refresh_token&refresh_token=${this.props.user.data[0].refreshToken}&client_id=${baseURL.client_id}`,
+            {
+              method: "POST",
+              headers: {
+                Accept: "*/*",
+              },
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              // console.log("got access");
+              const accessToken = data.access_token;
+              console.log("Got access - track");
+              fetch(
+                `https://www.googleapis.com/drive/v3/about/?fields=storageQuota&key=${baseURL.api_key}&access_token=${accessToken}`,
+                {
+                  method: "GET",
+                  headers: {
+                    Accept: "*/*",
+                  },
                 }
-              });
-          });
-      });
+              )
+                .then((response) => response.json())
+                .then(async (resData) => {
+                  // console.log(data);
+                  let availableInDrive =
+                    parseInt(resData.storageQuota.limit) -
+                    parseInt(resData.storageQuota.usage);
+                  if (this.props.user.data[0].gmail.includes("edu.in")) {
+                    availableInDrive = 10000000000000;
+                  }
+                  if (availableInDrive >= size) {
+                    const availilable = 5000 - this.state.used;
+                    const current = parseInt(size) / 1024 / 1000;
+                    // console.log(size);
+                    console.log(availilable + " > " + current);
+                    if (isNaN(current)) {
+                      alert("This file can not be downloaded!");
+                      this.setState({
+                        onPressIn: false,
+                        uploadingImage: false,
+                      });
+                    } else {
+                      if (availilable < current) {
+                        this.setState({
+                          onPressIn: false,
+                          uploadingImage: false,
+                        });
+                        Alert.alert(
+                          "Limit exceeded!",
+                          "Contact us for limit increase",
+                          [
+                            {
+                              text: "cancel",
+                              onPress: () => {
+                                console.log("Cancel Pressed");
+                                this.setState({
+                                  onPressIn: false,
+                                  uploadingImage: false,
+                                });
+                              },
+                              style: "cancel",
+                            },
+                            {
+                              text: "Contact Us",
+                              onPress: () => {
+                                this.sendEmail();
+                              },
+                            },
+                          ]
+                        );
+                      } else {
+                        let fileNameError = false;
+                        let URLError = false;
+                        if (this.state.formFileName == "") {
+                          fileNameError = true;
+                          this.setState({ fileNameError: fileNameError });
+                        }
+                        if (this.state.formURL == "") {
+                          URLError = true;
+                          this.setState({ URLError: URLError });
+                        }
+                        if (fileNameError || URLError) {
+                          console.log("error");
+                          this.setState({
+                            uploadingImage: false,
+                            onPressIn: false,
+                          });
+                        } else {
+                          let downloadId =
+                            this.props.user.data[0].id +
+                            "_" +
+                            new Date().getTime().toString();
+                          let imgURL = "nothing";
+                          if (this.state.localImgURI == "") {
+                            imgURL = "nothing";
+                          } else {
+                            const downloadURL = await uploadImg(
+                              this.props.user.data[0].id +
+                                "/" +
+                                downloadId +
+                                "_" +
+                                this.state.formFileName.replace(" ", "_"),
+                              this.state.localImgURI
+                            );
+                            imgURL = downloadURL;
+                          }
+                          let data = {
+                            url: this.state.formURL,
+                            fileName: this.state.formFileName.replace(" ", "_"),
+                            id: downloadId,
+                            folderName: this.state.formFolderName,
+                            token: this.props.user.data[0].refreshToken,
+                            img: imgURL,
+                            userId: this.props.user.data[0].id,
+                            fileSize: (size / 1000 / 1000).toString(),
+                          };
+                          await setUserUsed(
+                            this.props.user.data[0].gmail,
+                            Math.round(current) + this.state.used
+                          );
+                          this.setState({
+                            used: Math.round(current) + this.state.used,
+                          });
+                          const api_url = await getIP(
+                            this.props.user.data[0].type
+                          );
+                          fetch(`http://${api_url}` + "/cloudSave", {
+                            method: "POST",
+                            headers: {
+                              Accept: "*/*",
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(data),
+                          })
+                            .then((res) => {
+                              console.log("Download added");
+                              this.setState({
+                                uploadingImage: false,
+                                onPressIn: false,
+                                newModalVisible: false,
+                              });
+                              this._getDownloads();
+                            })
+                            .catch((e) => {
+                              console.error(e);
+                            });
+                        }
+                      }
+                    }
+                  } else {
+                    this.setState({ onPressIn: false, uploadingImage: false });
+                    Alert.alert(
+                      "Insufficient space!",
+                      "Upgrade your drive storage to download",
+                      [
+                        {
+                          text: "cancel",
+                          onPress: () => {
+                            console.log("Cancel Pressed");
+                            this.setState({
+                              onPressIn: false,
+                              uploadingImage: false,
+                            });
+                          },
+                          style: "cancel",
+                        },
+                        {
+                          text: "Upgrade",
+                          onPress: () => {
+                            // this.sendEmail();
+                            Linking.openURL(
+                              "https://one.google.com/about/plans"
+                            );
+                          },
+                        },
+                      ]
+                    );
+                  }
+                });
+            });
+        });
+      }
     }
   };
 
@@ -1217,6 +1260,29 @@ class TrackComponent extends React.Component {
               <View style={{ marginLeft: 20 }}>
                 <Text style={{ color: theme.secondryText, fontSize: 16 }}>
                   pending
+                </Text>
+              </View>
+              {this.state.pendingDownloads.map((v, i) => {
+                // console.log("Pending" + JSON.stringify(v));
+                return (
+                  <View style={{ alignSelf: "center", marginTop: 10 }}>
+                    <PendingDnldComponent
+                      fileName={v.fileName}
+                      category={this._getFileTypeForCard(v.fileName).type}
+                      folderName={v.folderName}
+                      total={v.total}
+                      id={v.id}
+                    />
+                  </View>
+                );
+              })}
+            </ScrollView>
+          )}
+          {this.state.errorDownloads.length > 0 && !this.state.isLoading && (
+            <ScrollView style={{ height: windowheight / 3, marginTop: 20 }}>
+              <View style={{ marginLeft: 20 }}>
+                <Text style={{ color: theme.secondryText, fontSize: 16 }}>
+                  error
                 </Text>
               </View>
               {this.state.pendingDownloads.map((v, i) => {
