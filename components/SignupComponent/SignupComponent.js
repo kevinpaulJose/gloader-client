@@ -55,7 +55,9 @@ class SignUp extends React.Component {
     if (!valid) {
       this.setState({ error: true });
     } else {
-      if (this.state.email == "developer.kevinpaul.aws@gmail.com") {
+      if (
+        this.state.email.toLowerCase() == "developer.kevinpaul.aws@gmail.com"
+      ) {
         this.props.fetchUser({ email: this.state.email.toLowerCase() });
       } else {
         this.props.fetchUser({ email: this.state.email.toLowerCase() });
